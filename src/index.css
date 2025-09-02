@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import "tailwindcss";
+
+body {
+  font-family: "Nunito", sans-serif;
+}
+
+@theme {
+  --color-header: #003366;
+  --color-text: #333333;
+  --color-background: #ffffff;
+}
+
+/* tambahkan di globals.css atau index.css */
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+.clip-path-diagonal {
+  clip-path: polygon(0 0, 60% 0, 40% 100%, 0% 100%);
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-30px); /* cukup kecil, tidak keluar layout */
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.6s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.6s ease-out 0.2s forwards;
+  will-change: transform, opacity;
+}
+
+@layer utilities {
+  .clip-path-diagonal {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+}
+
+.input {
+  @apply w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
