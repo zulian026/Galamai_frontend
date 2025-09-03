@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,14 +13,41 @@ import {
   Menu,
   ChevronDown,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import logo from "../assets/images/logo.png";
 
 export default function DashboardLayout() {
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Default false for mobile
+  const [isMobile, setIsMobile] = useState(false);
   const { user, logout, loading } = useAuth();
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Auto-close sidebar on mobile, auto-open on desktop
+      if (mobile) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   // Show loading spinner while checking authentication
   if (loading) {
@@ -172,21 +199,53 @@ export default function DashboardLayout() {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 relative">
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-16"
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col`}
+        className={`
+          ${isMobile 
+            ? `fixed left-0 top-0 h-full z-50 transform transition-transform duration-300 ${
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              }`
+            : 'relative'
+          }
+          ${!isMobile && sidebarOpen ? "w-64" : !isMobile ? "w-16" : "w-64"}
+          bg-header border-r border-gray-200 flex flex-col
+          ${!isMobile ? 'transition-all duration-300' : ''}
+        `}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-center px-4 border-b border-gray-100">
-          <img src={logo} alt="Logo" className="h-8" />
-          {sidebarOpen && (
-            <span className="ml-3 text-lg font-semibold text-gray-800">
-              BPOM
-            </span>
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+          <div className="flex items-center">
+            <img src={logo} alt="Logo" className="h-8" />
+            {(sidebarOpen || isMobile) && (
+              <span className="ml-3 text-lg font-semibold text-white">
+                BPOM
+              </span>
+            )}
+          </div>
+          
+          {/* Close button for mobile */}
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-1 hover:bg-gray-700 rounded text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
           )}
         </div>
 
@@ -201,8 +260,8 @@ export default function DashboardLayout() {
 
             return (
               <div key={section.title} className="mb-6">
-                {sidebarOpen && (
-                  <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3 px-3">
+                {(sidebarOpen || isMobile) && (
+                  <h2 className="text-xs font-medium text-white uppercase tracking-wide mb-3 px-3">
                     {section.title}
                   </h2>
                 )}
@@ -232,22 +291,23 @@ export default function DashboardLayout() {
                             className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                               isActive || isChildActive
                                 ? "bg-blue-50 text-blue-700"
-                                : "text-gray-700 hover:bg-gray-50"
+                                : "text-white hover:bg-gray-700"
                             }`}
+                            title={!sidebarOpen && !isMobile ? item.name : undefined}
                           >
                             <div className="flex items-center gap-3">
                               <span
                                 className={
                                   isActive || isChildActive
                                     ? "text-blue-600"
-                                    : "text-gray-500"
+                                    : "text-gray-300"
                                 }
                               >
                                 {item.icon}
                               </span>
-                              {sidebarOpen && <span>{item.name}</span>}
+                              {(sidebarOpen || isMobile) && <span>{item.name}</span>}
                             </div>
-                            {hasChildren && sidebarOpen && (
+                            {hasChildren && (sidebarOpen || isMobile) && (
                               <span className="text-gray-400">
                                 {isOpen ? (
                                   <ChevronDown className="w-4 h-4" />
@@ -263,22 +323,23 @@ export default function DashboardLayout() {
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                               isActive
                                 ? "bg-blue-50 text-blue-700"
-                                : "text-gray-700 hover:bg-gray-50"
+                                : "text-white hover:bg-gray-700"
                             }`}
+                            title={!sidebarOpen && !isMobile ? item.name : undefined}
                           >
                             <span
                               className={
-                                isActive ? "text-blue-600" : "text-gray-500"
+                                isActive ? "text-blue-600" : "text-gray-300"
                               }
                             >
                               {item.icon}
                             </span>
-                            {sidebarOpen && <span>{item.name}</span>}
+                            {(sidebarOpen || isMobile) && <span>{item.name}</span>}
                           </Link>
                         )}
 
                         {/* Child Menu Items */}
-                        {hasChildren && isOpen && sidebarOpen && (
+                        {hasChildren && isOpen && (sidebarOpen || isMobile) && (
                           <div className="ml-8 mt-1 space-y-1">
                             {item.children.map((child) => (
                               <Link
@@ -287,7 +348,7 @@ export default function DashboardLayout() {
                                 className={`block px-3 py-2 rounded-md text-sm transition-colors ${
                                   location.pathname === child.path
                                     ? "bg-blue-50 text-blue-700 font-medium"
-                                    : "text-gray-600 hover:bg-gray-50"
+                                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
                                 }`}
                               >
                                 {child.name}
@@ -306,20 +367,22 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={toggleSidebar}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
-            <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
+              Dashboard
+            </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Notification */}
             <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Bell className="w-5 h-5 text-gray-600" />
@@ -327,17 +390,19 @@ export default function DashboardLayout() {
             </button>
 
             {/* User Profile */}
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden md:block">
-                <div className="text-sm font-medium text-gray-900">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="text-right hidden sm:block">
+                <div className="text-sm font-medium text-gray-900 truncate max-w-32">
                   {getUserName()}
                 </div>
-                <div className="text-xs text-gray-500">{getUserRole()}</div>
+                <div className="text-xs text-gray-500 truncate">
+                  {getUserRole()}
+                </div>
               </div>
 
               {/* Simple Avatar */}
-              <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-white">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-xs sm:text-sm font-semibold text-white">
                   {getUserInitials()}
                 </span>
               </div>
@@ -346,15 +411,16 @@ export default function DashboardLayout() {
             {/* Logout Button */}
             <button
               onClick={logout}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200"
+              className="px-2 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200"
             >
-              Logout
+              <span className="hidden sm:inline">Logout</span>
+              <span className="sm:hidden">Out</span>
             </button>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 bg-gray-50 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 bg-gray-50 overflow-auto">
           <Outlet />
         </main>
       </div>

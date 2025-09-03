@@ -22,9 +22,22 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }) {
         });
         if (!res.ok) throw new Error("Gagal memuat role");
         const data = await res.json();
-        setRoles(data.data || data);
+
+        // Fix: Handle paginated response structure
+        // Laravel paginate returns: { data: { data: [...], current_page: 1, ... } }
+        if (data.data && data.data.data && Array.isArray(data.data.data)) {
+          setRoles(data.data.data);
+        } else if (Array.isArray(data.data)) {
+          setRoles(data.data);
+        } else if (Array.isArray(data)) {
+          setRoles(data);
+        } else {
+          console.warn("Unexpected roles data structure:", data);
+          setRoles([]);
+        }
       } catch (err) {
         console.error("Fetch roles error:", err);
+        setRoles([]); // Ensure roles is always an array
       }
     };
 
@@ -85,7 +98,9 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* input Nama */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nama</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Nama
+            </label>
             <input
               type="text"
               name="nama"
@@ -98,7 +113,9 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }) {
 
           {/* input Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
             <input
               type="email"
               name="email"
@@ -111,7 +128,9 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }) {
 
           {/* input Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
             <input
               type="password"
               name="password"
@@ -125,7 +144,9 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }) {
 
           {/* Dropdown Role */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Role</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Role
+            </label>
             <select
               name="id_role"
               value={formData.id_role}
@@ -134,11 +155,13 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }) {
               className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Pilih Role --</option>
-              {roles.map((role) => (
-                <option key={role.id_role} value={role.id_role}>
-                  {role.nm_role}
-                </option>
-              ))}
+              {/* Add safety check to ensure roles is array before mapping */}
+              {Array.isArray(roles) &&
+                roles.map((role) => (
+                  <option key={role.id_role} value={role.id_role}>
+                    {role.nm_role}
+                  </option>
+                ))}
             </select>
           </div>
 

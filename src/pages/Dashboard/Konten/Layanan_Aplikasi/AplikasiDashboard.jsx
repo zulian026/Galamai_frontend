@@ -9,21 +9,21 @@ import {
   Globe,
   Smartphone,
 } from "lucide-react";
+import FormTambahAplikasi from "./FormTambahAplikasi";
+import FormEditAplikasi from "./FormEditAplikasi";
 
 export default function AplikasiDashboard() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("all");
-  const [form, setForm] = useState({
-    nama_app: "",
-    url: "",
-    image: "",
-    kategori: "internal",
-  });
-  const [editingId, setEditingId] = useState(null);
+  const [editingApp, setEditingApp] = useState(null);
   const [error, setError] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [tambahFormError, setTambahFormError] = useState("");
+  const [editFormError, setEditFormError] = useState("");
+  const [isTambahFormOpen, setIsTambahFormOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -62,38 +62,63 @@ export default function AplikasiDashboard() {
     }
   }, [token]);
 
-  // tambah/update
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-
-    const method = editingId ? "PUT" : "POST";
-    const url = editingId
-      ? `http://localhost:8000/api/aplikasi/${editingId}`
-      : "http://localhost:8000/api/aplikasi";
+  // handle tambah aplikasi
+  const handleTambahSubmit = async (formData) => {
+    setTambahFormError("");
+    setSubmitting(true);
 
     try {
-      const res = await fetch(url, {
-        method,
+      const res = await fetch("http://localhost:8000/api/aplikasi", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(formData),
       });
 
       if (!res.ok) {
         const msg = await res.text();
-        throw new Error(`Gagal simpan: ${msg}`);
+        throw new Error(`Gagal menambah aplikasi: ${msg}`);
       }
 
-      setForm({ nama_app: "", url: "", image: "", kategori: "internal" });
-      setEditingId(null);
-      setIsFormOpen(false);
+      handleCloseTambahForm();
       fetchApps();
     } catch (err) {
-      setError(err.message);
+      setTambahFormError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // handle edit aplikasi
+  const handleEditSubmit = async (formData, appId) => {
+    setEditFormError("");
+    setSubmitting(true);
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/aplikasi/${appId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(`Gagal update aplikasi: ${msg}`);
+      }
+
+      handleCloseEditForm();
+      fetchApps();
+    } catch (err) {
+      setEditFormError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -120,22 +145,27 @@ export default function AplikasiDashboard() {
     }
   };
 
-  // edit
-  const handleEdit = (app) => {
-    setForm({
-      nama_app: app.nama_app || "",
-      url: app.url || "",
-      image: app.image || "",
-      kategori: app.kategori || "internal",
-    });
-    setEditingId(app.id_aplikasi);
-    setIsFormOpen(true);
+  // open/close form handlers
+  const handleOpenTambahForm = () => {
+    setTambahFormError("");
+    setIsTambahFormOpen(true);
   };
 
-  const handleCancelEdit = () => {
-    setForm({ nama_app: "", url: "", image: "", kategori: "internal" });
-    setEditingId(null);
-    setIsFormOpen(false);
+  const handleCloseTambahForm = () => {
+    setTambahFormError("");
+    setIsTambahFormOpen(false);
+  };
+
+  const handleOpenEditForm = (app) => {
+    setEditingApp(app);
+    setEditFormError("");
+    setIsEditFormOpen(true);
+  };
+
+  const handleCloseEditForm = () => {
+    setEditingApp(null);
+    setEditFormError("");
+    setIsEditFormOpen(false);
   };
 
   // Filter aplikasi
@@ -198,7 +228,7 @@ export default function AplikasiDashboard() {
           </div>
           <button
             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            onClick={() => setIsFormOpen(true)}
+            onClick={handleOpenTambahForm}
           >
             <Plus className="w-4 h-4" />
             Tambah Aplikasi
@@ -206,7 +236,7 @@ export default function AplikasiDashboard() {
         </div>
       </div>
 
-      {/* Error Message */}
+      {/* Global Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
@@ -225,101 +255,24 @@ export default function AplikasiDashboard() {
         </div>
       )}
 
-      {/* Form Section */}
-      {isFormOpen && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-gray-900">
-              {editingId ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
-            </h2>
-            <button
-              onClick={handleCancelEdit}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              ✕
-            </button>
-          </div>
+      {/* Form Tambah Aplikasi */}
+      <FormTambahAplikasi
+        isOpen={isTambahFormOpen}
+        onClose={handleCloseTambahForm}
+        onSubmit={handleTambahSubmit}
+        error={tambahFormError}
+        loading={submitting}
+      />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nama Aplikasi
-                </label>
-                <input
-                  type="text"
-                  placeholder="Masukkan nama aplikasi"
-                  value={form.nama_app}
-                  onChange={(e) =>
-                    setForm({ ...form, nama_app: e.target.value })
-                  }
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL Aplikasi
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://example.com"
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Path Gambar
-                </label>
-                <input
-                  type="text"
-                  placeholder="/path/to/image.png"
-                  value={form.image}
-                  onChange={(e) => setForm({ ...form, image: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kategori
-                </label>
-                <select
-                  value={form.kategori}
-                  onChange={(e) =>
-                    setForm({ ...form, kategori: e.target.value })
-                  }
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                >
-                  <option value="internal">Internal</option>
-                  <option value="eksternal">Eksternal</option>
-                  <option value="lainnya">Lainnya</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <button
-                type="submit"
-                className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                {editingId ? "Update Aplikasi" : "Tambah Aplikasi"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                Batal
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {/* Form Edit Aplikasi */}
+      <FormEditAplikasi
+        isOpen={isEditFormOpen}
+        onClose={handleCloseEditForm}
+        onSubmit={handleEditSubmit}
+        appData={editingApp}
+        error={editFormError}
+        loading={submitting}
+      />
 
       {/* Search & Filter Section */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -417,8 +370,8 @@ export default function AplikasiDashboard() {
 
                   <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
                     <button
-                      onClick={() => handleEdit(app)}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium border border-blue-200"
+                      onClick={() => handleOpenEditForm(app)}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium border border-orange-200"
                     >
                       <Edit3 className="w-4 h-4" />
                       Edit
@@ -481,7 +434,7 @@ export default function AplikasiDashboard() {
             <span>
               {apps.filter((app) => app.kategori === "internal").length}{" "}
               Internal •{" "}
-              {apps.filter((app) => app.kategori === "eksternal").length}{" "}
+              {apps.filter((app) => app.kategasi === "eksternal").length}{" "}
               Eksternal •{" "}
               {apps.filter((app) => app.kategori === "lainnya").length} Lainnya
             </span>

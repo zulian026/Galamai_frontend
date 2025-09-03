@@ -12,7 +12,7 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
+  
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -27,8 +27,11 @@ export default function Users() {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
-      const data = await res.json();
-      setUsers(data.data || data);
+      const result = await res.json();
+      console.log("API Response:", result);
+
+      // Karena paginate, user array ada di result.data.data
+      setUsers(result.data?.data || []);
     } catch (err) {
       console.error("Fetch users failed:", err);
       setError("Gagal memuat data pengguna");
@@ -113,8 +116,12 @@ export default function Users() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Manajemen User</h1>
-            <p className="text-sm text-gray-600 mt-1">Kelola data pengguna sistem</p>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Manajemen User
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Kelola data pengguna sistem
+            </p>
           </div>
           <button
             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
