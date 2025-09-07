@@ -11,6 +11,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <FaqSection />
       <LayananUtama />
       <AboutSection />
       <NewsSection />
