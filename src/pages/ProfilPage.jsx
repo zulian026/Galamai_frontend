@@ -483,6 +483,6 @@ export default function ProfilPage() {
           </div>
         </div>
       </section>
-    </main>
+    </main> 
   );
 }

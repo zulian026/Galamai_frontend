@@ -12,7 +12,7 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const fetchUsers = async () => {
     try {
       setLoading(true);

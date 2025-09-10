@@ -38,8 +38,8 @@ export default function DashboardLayout() {
     };
 
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Close sidebar when route changes on mobile
@@ -207,7 +207,7 @@ export default function DashboardLayout() {
     <div className="flex min-h-screen bg-gray-50 relative">
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -216,15 +216,16 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside
         className={`
-          ${isMobile 
-            ? `fixed left-0 top-0 h-full z-50 transform transition-transform duration-300 ${
-                sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-              }`
-            : 'relative'
+          ${
+            isMobile
+              ? `fixed left-0 top-0 h-full z-50 transform transition-transform duration-300 ${
+                  sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                }`
+              : "relative"
           }
           ${!isMobile && sidebarOpen ? "w-64" : !isMobile ? "w-16" : "w-64"}
           bg-header border-r border-gray-200 flex flex-col
-          ${!isMobile ? 'transition-all duration-300' : ''}
+          ${!isMobile ? "transition-all duration-300" : ""}
         `}
       >
         {/* Logo */}
@@ -237,7 +238,7 @@ export default function DashboardLayout() {
               </span>
             )}
           </div>
-          
+
           {/* Close button for mobile */}
           {isMobile && (
             <button
@@ -293,7 +294,9 @@ export default function DashboardLayout() {
                                 ? "bg-blue-50 text-blue-700"
                                 : "text-white hover:bg-gray-700"
                             }`}
-                            title={!sidebarOpen && !isMobile ? item.name : undefined}
+                            title={
+                              !sidebarOpen && !isMobile ? item.name : undefined
+                            }
                           >
                             <div className="flex items-center gap-3">
                               <span
@@ -305,7 +308,9 @@ export default function DashboardLayout() {
                               >
                                 {item.icon}
                               </span>
-                              {(sidebarOpen || isMobile) && <span>{item.name}</span>}
+                              {(sidebarOpen || isMobile) && (
+                                <span>{item.name}</span>
+                              )}
                             </div>
                             {hasChildren && (sidebarOpen || isMobile) && (
                               <span className="text-gray-400">
@@ -325,7 +330,9 @@ export default function DashboardLayout() {
                                 ? "bg-blue-50 text-blue-700"
                                 : "text-white hover:bg-gray-700"
                             }`}
-                            title={!sidebarOpen && !isMobile ? item.name : undefined}
+                            title={
+                              !sidebarOpen && !isMobile ? item.name : undefined
+                            }
                           >
                             <span
                               className={
@@ -334,7 +341,9 @@ export default function DashboardLayout() {
                             >
                               {item.icon}
                             </span>
-                            {(sidebarOpen || isMobile) && <span>{item.name}</span>}
+                            {(sidebarOpen || isMobile) && (
+                              <span>{item.name}</span>
+                            )}
                           </Link>
                         )}
 
