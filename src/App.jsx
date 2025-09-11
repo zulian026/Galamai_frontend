@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import ChatWidget from "./components/ChatWidget";
 import Users from "./pages/Dashboard/Users/Users";
 import AplikasiDashboard from "./pages/Dashboard/Konten/Layanan_Aplikasi/AplikasiDashboard";
+import LayananPage from "./pages/Dashboard/Layanan/LayananPage";
 
 export default function App() {
   return (
@@ -73,6 +74,7 @@ export default function App() {
               path="/dashboard/konten/Layanan_Aplikasi"
               element={<AplikasiDashboard />}
             />
+            <Route path="/dashboard/Layanan" element={<LayananPage />} />
             {/* kalau ada halaman lain tambahin disini */}
           </Route>
 

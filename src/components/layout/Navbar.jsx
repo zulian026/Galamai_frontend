@@ -6,15 +6,11 @@ import logo from "../../assets/images/logo.png";
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isBeritaDropdownOpen, setIsBeritaDropdownOpen] = useState(false);
   const [isBeritaDropdownVisible, setIsBeritaDropdownVisible] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
   const [isMobileBeritaDropdownOpen, setIsMobileBeritaDropdownOpen] =
     useState(false);
-  const dropdownRef = useRef(null);
   const beritaDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const location = useLocation();
@@ -30,9 +26,6 @@ export default function Navbar() {
 
     // Close dropdown if clicked outside
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        closeDropdown();
-      }
       if (
         beritaDropdownRef.current &&
         !beritaDropdownRef.current.contains(event.target)
@@ -57,24 +50,6 @@ export default function Navbar() {
     };
   }, []);
 
-  const openDropdown = () => {
-    setIsDropdownOpen(true);
-    setTimeout(() => setIsDropdownVisible(true), 10);
-  };
-
-  const closeDropdown = () => {
-    setIsDropdownVisible(false);
-    setTimeout(() => setIsDropdownOpen(false), 300);
-  };
-
-  const toggleDropdown = () => {
-    if (isDropdownOpen) {
-      closeDropdown();
-    } else {
-      openDropdown();
-    }
-  };
-
   const openBeritaDropdown = () => {
     setIsBeritaDropdownOpen(true);
     setTimeout(() => setIsBeritaDropdownVisible(true), 10);
@@ -95,12 +70,7 @@ export default function Navbar() {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-    setIsMobileDropdownOpen(false);
     setIsMobileBeritaDropdownOpen(false);
-  };
-
-  const toggleMobileDropdown = () => {
-    setIsMobileDropdownOpen(!isMobileDropdownOpen);
   };
 
   const toggleMobileBeritaDropdown = () => {
@@ -110,15 +80,7 @@ export default function Navbar() {
   const menuItems = [
     { name: "BERANDA", path: "/" },
     { name: "PROFIL", path: "/profil" },
-    {
-      name: "LAYANAN",
-      dropdown: [
-        { name: "Tabel Biaya Uji", path: "/layanan/biaya-uji" },
-        { name: "Pengaduan Masyarakat", path: "/layanan/pengaduan" },
-        { name: "Whistle Blowing", path: "/layanan/whistle-blowing" },
-        { name: "Layanan Pertanyaan", path: "/layanan/pertanyaan" },
-      ],
-    },
+    { name: "LAYANAN", path: "/layanan" },
     {
       name: "BERITA",
       dropdown: [
@@ -131,10 +93,8 @@ export default function Navbar() {
   ];
 
   useEffect(() => {
-    closeDropdown();
     closeBeritaDropdown();
     setIsMobileMenuOpen(false);
-    setIsMobileDropdownOpen(false);
     setIsMobileBeritaDropdownOpen(false);
   }, [location]);
 
@@ -268,16 +228,10 @@ export default function Navbar() {
                   <li
                     key={item.name}
                     className="relative"
-                    ref={
-                      item.name === "LAYANAN" ? dropdownRef : beritaDropdownRef
-                    }
+                    ref={beritaDropdownRef}
                   >
                     <button
-                      onClick={
-                        item.name === "LAYANAN"
-                          ? toggleDropdown
-                          : toggleBeritaDropdown
-                      }
+                      onClick={toggleBeritaDropdown}
                       className={`
                         flex items-center gap-1.5 text-base xl:text-sm font-bold cursor-pointer 
                         transition-all duration-200 ease-in-out px-3 py-2 rounded-md whitespace-nowrap
@@ -287,10 +241,8 @@ export default function Navbar() {
                             : "text-white hover:text-green-400"
                         }
                         ${
-                          (item.name === "LAYANAN" &&
-                            location.pathname.startsWith("/layanan")) ||
-                          (item.name === "BERITA" &&
-                            location.pathname.startsWith("/berita"))
+                          item.name === "BERITA" &&
+                          location.pathname.startsWith("/berita")
                             ? isScrolled
                               ? "text-blue-600"
                               : "text-blue-200"
@@ -304,8 +256,7 @@ export default function Navbar() {
                         className={`
                           transition-all duration-300 ease-in-out
                           ${
-                            (item.name === "LAYANAN" && isDropdownOpen) ||
-                            (item.name === "BERITA" && isBeritaDropdownOpen)
+                            item.name === "BERITA" && isBeritaDropdownOpen
                               ? "rotate-180"
                               : ""
                           }
@@ -313,8 +264,7 @@ export default function Navbar() {
                       />
                     </button>
 
-                    {((item.name === "LAYANAN" && isDropdownOpen) ||
-                      (item.name === "BERITA" && isBeritaDropdownOpen)) && (
+                    {item.name === "BERITA" && isBeritaDropdownOpen && (
                       <div className="absolute top-full left-0 mt-1.5 w-60 z-50">
                         <ul
                           className={`
@@ -322,9 +272,7 @@ export default function Navbar() {
                             overflow-hidden backdrop-blur-sm
                             transform transition-all duration-300 ease-out origin-top
                             ${
-                              (item.name === "LAYANAN" && isDropdownVisible) ||
-                              (item.name === "BERITA" &&
-                                isBeritaDropdownVisible)
+                              isBeritaDropdownVisible
                                 ? "opacity-100 scale-y-100 translate-y-0"
                                 : "opacity-0 scale-y-95 -translate-y-2"
                             }
@@ -347,13 +295,9 @@ export default function Navbar() {
                                   }
                                 `}
                                 style={{
-                                  transitionDelay:
-                                    (item.name === "LAYANAN" &&
-                                      isDropdownVisible) ||
-                                    (item.name === "BERITA" &&
-                                      isBeritaDropdownVisible)
-                                      ? `${index * 50}ms`
-                                      : "0ms",
+                                  transitionDelay: isBeritaDropdownVisible
+                                    ? `${index * 50}ms`
+                                    : "0ms",
                                 }}
                               >
                                 <span className="flex items-center justify-between">
@@ -454,19 +398,13 @@ export default function Navbar() {
                   item.dropdown ? (
                     <li key={item.name}>
                       <button
-                        onClick={
-                          item.name === "LAYANAN"
-                            ? toggleMobileDropdown
-                            : toggleMobileBeritaDropdown
-                        }
+                        onClick={toggleMobileBeritaDropdown}
                         className={`
                           w-full flex items-center justify-between px-4 py-3 text-left
                           font-semibold transition-all duration-200 text-base
                           ${
-                            (item.name === "LAYANAN" &&
-                              location.pathname.startsWith("/layanan")) ||
-                            (item.name === "BERITA" &&
-                              location.pathname.startsWith("/berita"))
+                            item.name === "BERITA" &&
+                            location.pathname.startsWith("/berita")
                               ? "text-header bg-blue-50 border-r-4 border-r-header"
                               : "text-gray-700 hover:bg-gray-50 hover:text-header"
                           }
@@ -478,10 +416,8 @@ export default function Navbar() {
                           className={`
                             transition-transform duration-300
                             ${
-                              (item.name === "LAYANAN" &&
-                                isMobileDropdownOpen) ||
-                              (item.name === "BERITA" &&
-                                isMobileBeritaDropdownOpen)
+                              item.name === "BERITA" &&
+                              isMobileBeritaDropdownOpen
                                 ? "rotate-180"
                                 : ""
                             }
@@ -494,9 +430,8 @@ export default function Navbar() {
                         className={`
                           overflow-hidden transition-all duration-300 ease-out
                           ${
-                            (item.name === "LAYANAN" && isMobileDropdownOpen) ||
-                            (item.name === "BERITA" &&
-                              isMobileBeritaDropdownOpen)
+                            item.name === "BERITA" &&
+                            isMobileBeritaDropdownOpen
                               ? "max-h-64 opacity-100"
                               : "max-h-0 opacity-0"
                           }
@@ -519,10 +454,8 @@ export default function Navbar() {
                                 `}
                                 style={{
                                   transitionDelay:
-                                    (item.name === "LAYANAN" &&
-                                      isMobileDropdownOpen) ||
-                                    (item.name === "BERITA" &&
-                                      isMobileBeritaDropdownOpen)
+                                    item.name === "BERITA" &&
+                                    isMobileBeritaDropdownOpen
                                       ? `${index * 30}ms`
                                       : "0ms",
                                 }}
