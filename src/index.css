@@ -78,3 +78,37 @@ body {
 .input {
   @apply w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
 }
+
+.ProseMirror {
+  min-height: 200px;
+  padding: 0.75rem;
+  outline: none;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem; /* rounded */
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.ProseMirror p {
+  margin: 0.5rem 0;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid #ddd;
+  margin-left: 0;
+  padding-left: 1rem;
+  color: #666;
+  font-style: italic;
+}

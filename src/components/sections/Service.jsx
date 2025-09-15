@@ -1,10 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BookOpen, HelpCircle, Shield, Users, ArrowRight } from "lucide-react";
+import { Shield, Users, ArrowRight } from "lucide-react";
+import { aplikasiService } from "../../services/aplikasiService";
 
 export default function LayananKami() {
   const [tab, setTab] = useState("eksternal");
   const [isVisible, setIsVisible] = useState(false);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await aplikasiService.getAll();
+        setData(res);
+      } catch (error) {
+        console.error("Error fetch aplikasi:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -15,7 +32,6 @@ export default function LayananKami() {
     );
 
     if (sectionRef.current) observer.observe(sectionRef.current);
-
     return () => {
       if (sectionRef.current) observer.unobserve(sectionRef.current);
     };
@@ -29,54 +45,7 @@ export default function LayananKami() {
     }
   }, [tab]);
 
-  const layananData = {
-    internal: [
-      {
-        img: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=500&auto=format&fit=crop&q=60",
-        title: "SIIP",
-        desc: "Sampaikan keluhan atau ajukan pertanyaan terkait produk obat dan makanan.",
-        btn: "Selengkapnya",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=500&auto=format&fit=crop&q=60",
-        title: "Kompetensi SDM",
-        desc: "Informasi lengkap dan daftar untuk pengiriman sampel produk.",
-        btn: "Selengkapnya",
-      },
-      {
-        img: "https://plus.unsplash.com/premium_photo-1709560425798-d9bb56dff78b?w=500&auto=format&fit=crop&q=60",
-        title: "Pengukuran Kinerja",
-        desc: "Pantau hasil kinerja internal dengan lebih mudah.",
-        btn: "Selengkapnya",
-      },
-    ],
-    eksternal: [
-      {
-        img: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=500&auto=format&fit=crop&q=60",
-        title: "Pengaduan Masyarakat",
-        desc: "Laporkan masalah terkait obat dan makanan.",
-        btn: "Selengkapnya",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=500&auto=format&fit=crop&q=60",
-        title: "Informasi Produk",
-        desc: "Cari informasi resmi terkait obat dan makanan.",
-        btn: "Selengkapnya",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500&auto=format&fit=crop&q=60",
-        title: "Layanan Konsultasi",
-        desc: "Konsultasi langsung dengan ahli kesehatan.",
-        btn: "Selengkapnya",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&auto=format&fit=crop&q=60",
-        title: "Edukasi Kesehatan",
-        desc: "Materi edukasi dan tips kesehatan terpercaya.",
-        btn: "Selengkapnya",
-      },
-    ],
-  };
+  const filteredData = data.filter((item) => item.kategori === tab);
 
   return (
     <section
@@ -133,44 +102,69 @@ export default function LayananKami() {
 
         {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 justify-items-center">
-          {layananData[tab].map((item, index) => (
-            <div
-              key={index}
-              className={`relative w-full max-w-sm bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] transform ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-8 opacity-0"
-              }`}
-              style={{ transitionDelay: `${400 + index * 100}ms` }}
-            >
-              {/* Background Image */}
-              <div className="relative h-48 w-full overflow-hidden rounded-3xl">
-                <img
-                  src={item.img}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                />
-
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-
-                {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                  <h3 className="text-lg font-bold mb-1">{item.title}</h3>
-                  <p className="text-sm text-gray-200 mb-3 line-clamp-2">
-                    {item.desc}
-                  </p>
-
-                  {/* Action Button */}
-                  <button className="inline-flex items-center gap-2 bg-header hover:bg-green-500 text-white text-sm px-4 py-2 rounded-full font-semibold shadow-md transition-all duration-200">
-                    
-                    {item.btn}
-                    <ArrowRight size={14} />
-                  </button>
+          {loading ? (
+            // Skeleton loading (3 card)
+            Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="relative w-full max-w-sm bg-gray-200 rounded-3xl shadow-md overflow-hidden animate-pulse"
+              >
+                <div className="h-48 w-full bg-gray-300"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded w-3/4 mb-3"></div>
+                  <div className="h-8 bg-gray-400 rounded-full w-24"></div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : filteredData.length > 0 ? (
+            filteredData.map((item, index) => (
+              <div
+                key={item.id_aplikasi}
+                className={`relative w-full max-w-sm bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] transform ${
+                  isVisible
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-8 opacity-0"
+                }`}
+                style={{ transitionDelay: `${400 + index * 100}ms` }}
+              >
+                <div className="relative h-48 w-full overflow-hidden rounded-3xl">
+                  <img
+                    src={
+                      item.image_url
+                        ? `${import.meta.env.VITE_API_URL}/storage/${
+                            item.image
+                          }`
+                        : "https://via.placeholder.com/500x300?text=No+Image"
+                    }
+                    loading="lazy"
+                    alt={item.nama_app}
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                    <h3 className="text-lg font-bold mb-1">{item.nama_app}</h3>
+                    <p className="text-sm text-gray-200 mb-3 line-clamp-2">
+                      {item.deskripsi || "Tidak ada deskripsi"}
+                    </p>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-header hover:bg-green-500 text-white text-sm px-4 py-2 rounded-full font-semibold shadow-md transition-all duration-200"
+                    >
+                      Kunjungi
+                      <ArrowRight size={14} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center col-span-full">
+              Tidak ada data untuk kategori {tab}.
+            </p>
+          )}
         </div>
       </div>
     </section>

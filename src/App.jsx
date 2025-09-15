@@ -28,6 +28,8 @@ import NotFound from "./pages/NotFound";
 import ChatWidget from "./components/ChatWidget";
 import Users from "./pages/Dashboard/Users/Users";
 import AplikasiDashboard from "./pages/Dashboard/Konten/Layanan_Aplikasi/AplikasiDashboard";
+import LayananPage from "./pages/Dashboard/Layanan/LayananPage";
+import NewsDetailPage from "./pages/Berita/NewsDetailView";
 
 export default function App() {
   return (
@@ -52,6 +54,9 @@ export default function App() {
             <Route path="/berita/artikel" element={<ArticlePage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/kontak" element={<ContactPage />} />
+            // Di App.jsx atau router config
+            <Route path="/berita" element={<NewsPage />} />
+            <Route path="/:type/:id" element={<NewsDetailPage />} />
           </Route>
 
           {/* Auth */}
@@ -73,6 +78,7 @@ export default function App() {
               path="/dashboard/konten/Layanan_Aplikasi"
               element={<AplikasiDashboard />}
             />
+            <Route path="/dashboard/Layanan" element={<LayananPage />} />
             {/* kalau ada halaman lain tambahin disini */}
           </Route>
 
