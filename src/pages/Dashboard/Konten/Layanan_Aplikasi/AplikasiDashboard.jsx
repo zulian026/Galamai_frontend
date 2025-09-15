@@ -533,9 +533,9 @@ export default function AplikasiDashboard() {
                     <div className="flex items-start space-x-4">
                       {/* Image/Icon */}
                       <div className="flex-shrink-0">
-                        {app.image ? (
+                        {app.image_url ? (
                           <img
-                            src={`http://localhost:8000/storage/${app.image}`}
+                            src={app.image_url}
                             alt={app.nama_app}
                             className="h-12 w-12 rounded-lg object-cover"
                             onError={(e) => {
@@ -546,7 +546,7 @@ export default function AplikasiDashboard() {
                         ) : null}
                         <div
                           className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center"
-                          style={{ display: app.image ? "none" : "flex" }}
+                          style={{ display: app.image_url ? "none" : "flex" }}
                         >
                           <Image className="h-6 w-6 text-gray-400" />
                         </div>

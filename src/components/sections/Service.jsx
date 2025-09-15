@@ -131,11 +131,8 @@ export default function LayananKami() {
                 <div className="relative h-48 w-full overflow-hidden rounded-3xl">
                   <img
                     src={
-                      item.image_url
-                        ? `${import.meta.env.VITE_API_URL}/storage/${
-                            item.image
-                          }`
-                        : "https://via.placeholder.com/500x300?text=No+Image"
+                      item.image_url ||
+                      "https://via.placeholder.com/500x300?text=No+Image"
                     }
                     loading="lazy"
                     alt={item.nama_app}
