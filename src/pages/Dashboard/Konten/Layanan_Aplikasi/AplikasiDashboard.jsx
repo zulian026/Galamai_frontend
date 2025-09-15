@@ -1,446 +1,621 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Edit3,
   Trash2,
   ExternalLink,
+  Image,
   Search,
   Filter,
-  Globe,
-  Smartphone,
+  X,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-import FormTambahAplikasi from "./FormTambahAplikasi";
-import FormEditAplikasi from "./FormEditAplikasi";
+import { aplikasiService } from "../../../../services/aplikasiService";
+import { useAuth } from "../../../../contexts/AuthContext";
+// service layer
 
 export default function AplikasiDashboard() {
+  const { user, token, loading: authLoading } = useAuth();
+
   const [apps, setApps] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    nama_app: "",
+    url: "",
+    kategori: "internal",
+    image: null,
+    deskripsi: "",
+  });
+  const [editingId, setEditingId] = useState(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+
+  // Loading and error states
+  const [loading, setLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedKategori, setSelectedKategori] = useState("all");
-  const [editingApp, setEditingApp] = useState(null);
-  const [error, setError] = useState("");
-  const [tambahFormError, setTambahFormError] = useState("");
-  const [editFormError, setEditFormError] = useState("");
-  const [isTambahFormOpen, setIsTambahFormOpen] = useState(false);
-  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
 
-  const token = localStorage.getItem("token");
-
-  // fetch data
+  // Ambil data aplikasi menggunakan aplikasiService
   const fetchApps = async () => {
     try {
       setLoading(true);
-      setError("");
-
-      const res = await fetch("http://localhost:8000/api/aplikasi", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(`Gagal memuat data: ${res.status}`);
-      }
-
-      const data = await res.json();
-      setApps(Array.isArray(data) ? data : []);
+      setError(null);
+      const data = await aplikasiService.getAll();
+      setApps(data);
     } catch (err) {
-      setError(err.message);
+      console.error("Gagal fetch aplikasi", err);
+      setError("Gagal memuat data aplikasi. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      fetchApps();
-    } else {
-      setError("Token tidak ditemukan, silakan login dulu.");
-      setLoading(false);
-    }
-  }, [token]);
+  // Tambah / Update aplikasi menggunakan aplikasiService
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // handle tambah aplikasi
-  const handleTambahSubmit = async (formData) => {
-    setTambahFormError("");
-    setSubmitting(true);
+    if (!token) {
+      setError("Anda harus login untuk melakukan aksi ini!");
+      return;
+    }
+
+    if (!form.nama_app.trim()) {
+      setError("Nama aplikasi wajib diisi!");
+      return;
+    }
 
     try {
-      const res = await fetch("http://localhost:8000/api/aplikasi", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      setSubmitLoading(true);
+      setError(null);
 
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(`Gagal menambah aplikasi: ${msg}`);
+      const formData = {
+        nama_app: form.nama_app.trim(),
+        url: form.url.trim(),
+        kategori: form.kategori,
+        deskripsi: form.deskripsi.trim(),
+        image: form.image,
+      };
+
+      if (editingId) {
+        // Update menggunakan aplikasiService
+        await aplikasiService.update(editingId, formData, token);
+        setError(null);
+        console.log("Aplikasi berhasil diperbarui!");
+      } else {
+        // Tambah menggunakan aplikasiService
+        await aplikasiService.add(formData, token);
+        setError(null);
+        console.log("Aplikasi berhasil ditambahkan!");
       }
 
-      handleCloseTambahForm();
-      fetchApps();
+      // Reset form
+      resetForm();
+
+      // Refresh data
+      await fetchApps();
     } catch (err) {
-      setTambahFormError(err.message);
+      console.error("Error submitting form:", err);
+      setError(
+        editingId
+          ? "Gagal memperbarui aplikasi. Silakan coba lagi."
+          : "Gagal menambahkan aplikasi. Silakan coba lagi."
+      );
     } finally {
-      setSubmitting(false);
+      setSubmitLoading(false);
     }
   };
 
-  // handle edit aplikasi
-  const handleEditSubmit = async (formData, appId) => {
-    setEditFormError("");
-    setSubmitting(true);
+  // Hapus aplikasi menggunakan aplikasiService
+  const handleDelete = async (id) => {
+    if (!token) {
+      setError("Anda harus login untuk melakukan aksi ini!");
+      return;
+    }
+
+    const app = apps.find((a) => a.id_aplikasi === id);
+    if (!window.confirm(`Yakin hapus aplikasi "${app?.nama_app}"?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:8000/api/aplikasi/${appId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      setError(null);
+      await aplikasiService.delete(id, token);
+      console.log("Aplikasi berhasil dihapus!");
 
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(`Gagal update aplikasi: ${msg}`);
-      }
-
-      handleCloseEditForm();
-      fetchApps();
+      // Refresh data
+      await fetchApps();
     } catch (err) {
-      setEditFormError(err.message);
-    } finally {
-      setSubmitting(false);
+      console.error("Error deleting app:", err);
+      setError("Gagal menghapus aplikasi. Silakan coba lagi.");
     }
   };
 
-  // hapus
-  const handleDelete = async (id, nama) => {
-    if (!confirm(`Yakin hapus aplikasi "${nama}"?`)) return;
+  // Edit aplikasi → isi form dengan data lama
+  const handleEdit = (app) => {
+    setForm({
+      nama_app: app.nama_app || "",
+      url: app.url || "",
+      kategori: app.kategori || "internal",
+      image: null, // Reset image field for security
+      deskripsi: app.deskripsi || "",
+    });
+    setEditingId(app.id_aplikasi);
+    setIsFormVisible(true);
+    setError(null);
+  };
 
-    try {
-      const res = await fetch(`http://localhost:8000/api/aplikasi/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
+  // Reset form dan tutup modal
+  const resetForm = () => {
+    setForm({
+      nama_app: "",
+      url: "",
+      kategori: "internal",
+      image: null,
+      deskripsi: "",
+    });
+    setEditingId(null);
+    setIsFormVisible(false);
+    setError(null);
+  };
 
-      if (!res.ok) {
-        throw new Error("Gagal hapus aplikasi");
-      }
-
-      fetchApps();
-    } catch (err) {
-      setError(err.message);
+  const getCategoryColor = (kategori) => {
+    switch (kategori) {
+      case "internal":
+        return "bg-blue-100 text-blue-800";
+      case "eksternal":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  // open/close form handlers
-  const handleOpenTambahForm = () => {
-    setTambahFormError("");
-    setIsTambahFormOpen(true);
-  };
-
-  const handleCloseTambahForm = () => {
-    setTambahFormError("");
-    setIsTambahFormOpen(false);
-  };
-
-  const handleOpenEditForm = (app) => {
-    setEditingApp(app);
-    setEditFormError("");
-    setIsEditFormOpen(true);
-  };
-
-  const handleCloseEditForm = () => {
-    setEditingApp(null);
-    setEditFormError("");
-    setIsEditFormOpen(false);
-  };
-
-  // Filter aplikasi
+  // Filter applications
   const filteredApps = apps.filter((app) => {
     const matchesSearch =
       app.nama_app?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.url?.toLowerCase().includes(searchTerm.toLowerCase());
+      app.url?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.deskripsi?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      categoryFilter === "all" || app.kategori === categoryFilter;
 
-    const matchesKategori =
-      selectedKategori === "all" || app.kategori === selectedKategori;
-
-    return matchesSearch && matchesKategori;
+    return matchesSearch && matchesCategory;
   });
 
-  const getKategoriIcon = (kategori) => {
-    switch (kategori) {
-      case "internal":
-        return <Smartphone className="w-4 h-4" />;
-      case "eksternal":
-        return <Globe className="w-4 h-4" />;
-      default:
-        return <div className="w-4 h-4 bg-gray-400 rounded-full"></div>;
-    }
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setCategoryFilter("all");
   };
 
-  const getKategoriColor = (kategori) => {
-    switch (kategori) {
-      case "internal":
-        return "bg-green-50 text-green-700 border-green-200";
-      case "eksternal":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
-    }
-  };
+  // Fetch data saat component mount
+  useEffect(() => {
+    fetchApps();
+  }, []);
 
-  if (loading) {
+  // Show loading spinner while auth is loading
+  if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-sm text-gray-600">Memuat data aplikasi...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Memuat...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Manajemen Aplikasi
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Kelola aplikasi dan layanan digital
-            </p>
-          </div>
-          <button
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            onClick={handleOpenTambahForm}
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Aplikasi
-          </button>
-        </div>
-      </div>
-
-      {/* Global Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-5 h-5 text-red-500">⚠️</div>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-red-800 font-medium">Terjadi Kesalahan</h3>
-              <p className="text-red-600 text-sm mt-1">{error}</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Dashboard Aplikasi
+              </h1>
+              <p className="text-gray-600">
+                Kelola semua aplikasi perusahaan di satu tempat
+              </p>
+            </div>
+            {user && (
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Selamat datang,</p>
+                <p className="font-medium text-gray-900">{user.name}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-3" />
+              <p className="text-red-800">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-600 hover:text-red-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
+        )}
+
+        {/* Button Tambah & Filter */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <button
-            onClick={fetchApps}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+            onClick={() => {
+              setIsFormVisible(!isFormVisible);
+              if (editingId) {
+                resetForm();
+              }
+            }}
+            disabled={!token}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200"
           >
-            Coba Lagi
+            <Plus className="w-5 h-5 mr-2" />
+            Tambah Aplikasi
+          </button>
+
+          <button
+            onClick={() => setIsFilterVisible(!isFilterVisible)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+          >
+            <Filter className="w-5 h-5 mr-2" />
+            Filter
           </button>
         </div>
-      )}
 
-      {/* Form Tambah Aplikasi */}
-      <FormTambahAplikasi
-        isOpen={isTambahFormOpen}
-        onClose={handleCloseTambahForm}
-        onSubmit={handleTambahSubmit}
-        error={tambahFormError}
-        loading={submitting}
-      />
+        {/* Filter Section */}
+        {isFilterVisible && (
+          <div className="mb-6 bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Filter Aplikasi
+              </h3>
+              <button
+                onClick={() => setIsFilterVisible(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-      {/* Form Edit Aplikasi */}
-      <FormEditAplikasi
-        isOpen={isEditFormOpen}
-        onClose={handleCloseEditForm}
-        onSubmit={handleEditSubmit}
-        appData={editingApp}
-        error={editFormError}
-        loading={submitting}
-      />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Search */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cari Aplikasi
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Cari berdasarkan nama, URL, atau deskripsi..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
 
-      {/* Search & Filter Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Cari aplikasi berdasarkan nama atau URL..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+              {/* Category Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kategori
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">Semua Kategori</option>
+                  <option value="internal">Internal</option>
+                  <option value="eksternal">Eksternal</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Filter Summary & Clear */}
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                Menampilkan {filteredApps.length} dari {apps.length} aplikasi
+                {searchTerm && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    "{searchTerm}"
+                  </span>
+                )}
+                {categoryFilter !== "all" && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                    {categoryFilter}
+                  </span>
+                )}
+              </div>
+
+              {(searchTerm || categoryFilter !== "all") && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Reset Filter
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex gap-2">
-            <select
-              value={selectedKategori}
-              onChange={(e) => setSelectedKategori(e.target.value)}
-              className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            >
-              <option value="all">Semua Kategori</option>
-              <option value="internal">Internal</option>
-              <option value="eksternal">Eksternal</option>
-              <option value="lainnya">Lainnya</option>
-            </select>
+        )}
+
+        {/* Form Modal */}
+        {isFormVisible && (
+          <div className="mb-8 bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {editingId ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
+              </h2>
+              <button
+                onClick={resetForm}
+                className="text-gray-400 hover:text-gray-600"
+                disabled={submitLoading}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nama Aplikasi *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Masukkan nama aplikasi"
+                    value={form.nama_app}
+                    onChange={(e) =>
+                      setForm({ ...form, nama_app: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={submitLoading}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://example.com"
+                    value={form.url}
+                    onChange={(e) => setForm({ ...form, url: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={submitLoading}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Kategori
+                  </label>
+                  <select
+                    value={form.kategori}
+                    onChange={(e) =>
+                      setForm({ ...form, kategori: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={submitLoading}
+                  >
+                    <option value="internal">Internal</option>
+                    <option value="eksternal">Eksternal</option>
+                    <option value="lainnya">Lainnya</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Gambar/Icon
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setForm({ ...form, image: e.target.files[0] })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={submitLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Deskripsi Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Deskripsi
+                </label>
+                <textarea
+                  placeholder="Masukkan deskripsi aplikasi (opsional)"
+                  value={form.deskripsi}
+                  onChange={(e) =>
+                    setForm({ ...form, deskripsi: e.target.value })
+                  }
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  disabled={submitLoading}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={resetForm}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
+                  disabled={submitLoading}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors duration-200"
+                  disabled={submitLoading || !token}
+                >
+                  {submitLoading && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  {editingId ? "Update" : "Tambah"}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Applications Grid */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            Daftar Aplikasi ({filteredApps.length})
-          </h2>
+        {/* List Aplikasi */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">
+              Daftar Aplikasi ({filteredApps.length})
+            </h3>
+          </div>
 
-          {filteredApps.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {loading ? (
+            <div className="text-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-gray-600">Memuat aplikasi...</p>
+            </div>
+          ) : filteredApps.length === 0 ? (
+            <div className="text-center py-12">
+              {apps.length === 0 ? (
+                <>
+                  <Image className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Belum ada aplikasi
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Mulai dengan menambahkan aplikasi pertama Anda
+                  </p>
+                  <button
+                    onClick={() => setIsFormVisible(true)}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+                    disabled={!token}
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Tambah Aplikasi
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Tidak ada aplikasi yang cocok
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Coba ubah filter atau kata kunci pencarian
+                  </p>
+                  <button
+                    onClick={clearFilters}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Reset Filter
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
               {filteredApps.map((app) => (
                 <div
                   key={app.id_aplikasi}
-                  className="border border-gray-200 rounded-lg p-5 hover:border-gray-300 transition-colors"
+                  className="px-6 py-4 hover:bg-gray-50"
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                          <span className="text-lg font-semibold text-white">
-                            {app.nama_app?.charAt(0)?.toUpperCase() || "A"}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="text-base font-semibold text-gray-900">
-                            {app.nama_app || "Nama tidak tersedia"}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${getKategoriColor(
-                                app.kategori
-                              )}`}
-                            >
-                              {getKategoriIcon(app.kategori)}
-                              {app.kategori || "Lainnya"}
-                            </span>
-                          </div>
+                    <div className="flex items-start space-x-4">
+                      {/* Image/Icon */}
+                      <div className="flex-shrink-0">
+                        {app.image ? (
+                          <img
+                            src={`http://localhost:8000/storage/${app.image}`}
+                            alt={app.nama_app}
+                            className="h-12 w-12 rounded-lg object-cover"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.nextSibling.style.display = "flex";
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center"
+                          style={{ display: app.image ? "none" : "flex" }}
+                        >
+                          <Image className="h-6 w-6 text-gray-400" />
                         </div>
                       </div>
 
-                      {app.url && (
-                        <div className="mb-4">
+                      {/* App Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-3 mb-1">
+                          <h4 className="text-lg font-medium text-gray-900 truncate">
+                            {app.nama_app}
+                          </h4>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
+                              app.kategori
+                            )}`}
+                          >
+                            {app.kategori}
+                          </span>
+                        </div>
+
+                        {/* Deskripsi */}
+                        {app.deskripsi && (
+                          <p className="text-sm text-gray-600 mb-2 leading-relaxed">
+                            {app.deskripsi}
+                          </p>
+                        )}
+
+                        {app.url && (
                           <a
                             href={app.url}
                             target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm transition-colors"
+                            rel="noreferrer"
+                            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
                           >
-                            <ExternalLink className="w-4 h-4" />
-                            {app.url.length > 40
-                              ? `${app.url.substring(0, 40)}...`
-                              : app.url}
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            {app.url}
                           </a>
-                        </div>
-                      )}
-
-                      {app.image && (
-                        <div className="mb-4">
-                          <p className="text-xs text-gray-500 mb-1">Gambar:</p>
-                          <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
-                            {app.image}
-                          </code>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => handleOpenEditForm(app)}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium border border-orange-200"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleDelete(app.id_aplikasi, app.nama_app)
-                      }
-                      className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Hapus
-                    </button>
+                    {/* Actions */}
+                    {token && (
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleEdit(app)}
+                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200"
+                          disabled={submitLoading}
+                        >
+                          <Edit3 className="w-4 h-4 mr-1" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(app.id_aplikasi)}
+                          className="inline-flex items-center px-3 py-1.5 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors duration-200"
+                          disabled={submitLoading}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Hapus
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-16">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Smartphone className="w-8 h-8 text-gray-400" />
-                </div>
-                <div>
-                  <div className="text-gray-900 font-medium">
-                    {searchTerm || selectedKategori !== "all"
-                      ? "Tidak ada aplikasi yang sesuai filter"
-                      : "Belum ada aplikasi terdaftar"}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {searchTerm || selectedKategori !== "all"
-                      ? "Coba ubah kata kunci pencarian atau filter"
-                      : "Tambahkan aplikasi baru untuk memulai"}
-                  </div>
-                </div>
-                {(searchTerm || selectedKategori !== "all") && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm("");
-                      setSelectedKategori("all");
-                    }}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  >
-                    Reset filter
-                  </button>
-                )}
-              </div>
-            </div>
           )}
         </div>
       </div>
-
-      {/* Summary Footer */}
-      {filteredApps.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span>
-              Menampilkan {filteredApps.length} dari {apps.length} aplikasi
-            </span>
-            <span>
-              {apps.filter((app) => app.kategori === "internal").length}{" "}
-              Internal •{" "}
-              {apps.filter((app) => app.kategasi === "eksternal").length}{" "}
-              Eksternal •{" "}
-              {apps.filter((app) => app.kategori === "lainnya").length} Lainnya
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

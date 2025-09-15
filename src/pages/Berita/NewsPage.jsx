@@ -198,7 +198,7 @@ export default function NewsPage() {
                         </p>
                         <p className="text-gray-700 mb-6">{news.desc}</p>
                         <a
-                          href="#"
+                          href={`/${activeTab}/${i + 1}`} // i+1 = id dummy
                           className="text-blue-600 hover:underline font-semibold"
                         >
                           Lihat Selengkapnya →
@@ -231,7 +231,7 @@ export default function NewsPage() {
             {displayedLatest.map((n, i) => (
               <a
                 key={i}
-                href="#"
+                href={`/${activeTab}/${i + 1}`} // id sesuai index/dummy
                 className="rounded-xl overflow-hidden shadow bg-white hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-2"
               >
                 <div className="relative">

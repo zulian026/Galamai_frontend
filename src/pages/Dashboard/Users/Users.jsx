@@ -3,62 +3,48 @@ import React, { useEffect, useState } from "react";
 import { Plus, Edit3, Trash2, Search, Filter, User } from "lucide-react";
 import AddUserModal from "./AddUserModal";
 import EditUserModal from "./EditUserModal";
+import { useAuth } from "../../../contexts/AuthContext";
+import { userService } from "../../../services/userService"; // service layer
 
 export default function Users() {
+  const { token } = useAuth();
   const [users, setUsers] = useState([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
+  // Fetch users pakai service
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://127.0.0.1:8000/api/users", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const result = await res.json();
-      console.log("API Response:", result);
-
-      // Karena paginate, user array ada di result.data.data
+      setError(null);
+      const result = await userService.getAll(token);
       setUsers(result.data?.data || []);
     } catch (err) {
-      console.error("Fetch users failed:", err);
+      console.error(err);
       setError("Gagal memuat data pengguna");
     } finally {
       setLoading(false);
     }
   };
 
+  // Delete user pakai service
   const handleDelete = async (id, nama) => {
     if (!window.confirm(`Yakin ingin hapus user ${nama}?`)) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/users/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(`Gagal menghapus user. Status: ${res.status}`);
-      }
-
+      setDeletingId(id);
+      await userService.delete(id, token);
       setUsers((prev) => prev.filter((u) => u.id_user !== id));
     } catch (err) {
-      console.error("Delete user failed:", err);
-      alert("Gagal menghapus user");
+      console.error(err);
+      setError(`Gagal menghapus user ${nama}`);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -67,7 +53,6 @@ export default function Users() {
     setIsEditModalOpen(true);
   };
 
-  // Filter users berdasarkan search term
   const filteredUsers = users.filter(
     (user) =>
       user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,8 +61,8 @@ export default function Users() {
   );
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (token) fetchUsers();
+  }, [token]);
 
   if (loading) {
     return (
@@ -175,12 +160,10 @@ export default function Users() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUsers.length > 0 ? (
-                filteredUsers.map((user, index) => (
+                filteredUsers.map((user) => (
                   <tr
                     key={user.id_user}
-                    className={`hover:bg-gray-50 transition-colors ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-25"
-                    }`}
+                    className="hover:bg-gray-50 transition-colors odd:bg-white even:bg-gray-50"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -219,11 +202,18 @@ export default function Users() {
                           Edit
                         </button>
                         <button
-                          className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200"
+                          disabled={deletingId === user.id_user}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm font-medium border ${
+                            deletingId === user.id_user
+                              ? "bg-red-100 text-red-400 border-red-200 cursor-not-allowed"
+                              : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                          }`}
                           onClick={() => handleDelete(user.id_user, user.nama)}
                         >
                           <Trash2 className="w-4 h-4" />
-                          Hapus
+                          {deletingId === user.id_user
+                            ? "Menghapus..."
+                            : "Hapus"}
                         </button>
                       </div>
                     </td>
