@@ -30,6 +30,7 @@ import Users from "./pages/Dashboard/Users/Users";
 import AplikasiDashboard from "./pages/Dashboard/Konten/Layanan_Aplikasi/AplikasiDashboard";
 import LayananPage from "./pages/Dashboard/Layanan/LayananPage";
 import NewsDetailPage from "./pages/Berita/NewsDetailView";
+import BeritaEvent from "./pages/Dashboard/Konten/Berita/BeritaEvent";
 
 export default function App() {
   return (
@@ -79,6 +80,8 @@ export default function App() {
               element={<AplikasiDashboard />}
             />
             <Route path="/dashboard/Layanan" element={<LayananPage />} />
+            <Route path="/dashboard/Berita" element={<BeritaEvent />} />
+
             {/* kalau ada halaman lain tambahin disini */}
           </Route>
 

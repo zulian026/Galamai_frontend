@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import heroBg from "../../assets/images/hero-bg.png";
-import { MapPin, Newspaper, Calendar } from "lucide-react"; // 🔹 Icon tab
+import { MapPin, Newspaper, Calendar, Loader2 } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import { beritaEventService } from "../../services/beritaEventService";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -10,79 +11,55 @@ import "swiper/css/pagination";
 export default function NewsPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("berita");
+  const [newsData, setNewsData] = useState([]);
+  const [eventData, setEventData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const tabs = [
     { id: "berita", label: "Berita", icon: Newspaper },
     { id: "event", label: "Event", icon: Calendar },
   ];
 
-  const mainNews = [
-    {
-      title: "Tips Memilih Makanan Kemasan yang Aman",
-      date: "28 Agustus 2025",
-      desc: "Kenali cara membaca label gizi, tanggal kedaluwarsa, dan kode produksi pada makanan kemasan.",
-      image: heroBg,
-    },
-    {
-      title: "Penggerebekan Pabrik Obat Ilegal di Jakarta",
-      date: "28 Agustus 2025",
-      desc: "BPOM menggerebek pabrik obat ilegal di Jakarta, menemukan ratusan obat tanpa izin edar.",
-      image: heroBg,
-    },
-  ];
-
-  const mainEvents = [
-    {
-      title: "Pameran Keamanan Pangan Nasional",
-      date: "15 September 2025",
-      desc: "Acara tahunan memamerkan inovasi keamanan pangan dari berbagai daerah.",
-      image: heroBg,
-    },
-    {
-      title: "Workshop Inspeksi Pangan",
-      date: "20 September 2025",
-      desc: "Pelatihan untuk petugas daerah dalam melakukan inspeksi keamanan pangan.",
-      image: heroBg,
-    },
-  ];
-
-  const latestNews = [
-    {
-      title: "Edukasi Keamanan Pangan di Sekolah",
-      date: "28 Agustus 2025",
-      desc: "Sosialisasi membaca label gizi dan masa kedaluwarsa bagi siswa sekolah.",
-      image: heroBg,
-    },
-    {
-      title: "Kolaborasi Pengawasan Pangan Daerah",
-      date: "28 Agustus 2025",
-      desc: "Sinergi BPOM dengan pemerintah daerah memperkuat pengawasan pangan.",
-      image: heroBg,
-    },
-  ];
-
-  const latestEvents = [
-    {
-      title: "Pelatihan Inspeksi Pangan",
-      date: "28 Agustus 2025",
-      desc: "Pelatihan bagi petugas pengawas untuk meningkatkan keamanan pangan di masyarakat.",
-      image: heroBg,
-    },
-    {
-      title: "Kampanye Makanan Aman",
-      date: "28 Agustus 2025",
-      desc: "Kampanye nasional untuk mengedukasi masyarakat tentang makanan aman.",
-      image: heroBg,
-    },
-  ];
-
   const titleRef = useRef(null);
   const swiperRef = useRef(null);
   const latestGridRef = useRef(null);
 
+  // Fetch data dari API
   useEffect(() => {
-    setTimeout(() => setIsLoaded(true), 100);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token"); // Sesuaikan dengan cara penyimpanan token Anda
 
+        const response = await beritaEventService.getAll(token);
+
+        if (response?.data) {
+          // Pisahkan berita dan event berdasarkan type/category
+          const beritaItems = response.data.filter(
+            (item) => item.type === "berita" || item.category === "berita"
+          );
+          const eventItems = response.data.filter(
+            (item) => item.type === "event" || item.category === "event"
+          );
+
+          setNewsData(beritaItems);
+          setEventData(eventItems);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Gagal memuat data. Silakan coba lagi.");
+      } finally {
+        setLoading(false);
+        setTimeout(() => setIsLoaded(true), 100);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Setup intersection observer
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -101,11 +78,62 @@ export default function NewsPage() {
     );
 
     return () => observer.disconnect();
-  }, []);
+  }, [isLoaded]);
+
+  // Helper functions
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const getImageUrl = (item) => {
+    // Prioritas: image_url dari backend (sudah full URL)
+    if (item.image_url) return item.image_url;
+
+    // Fallback ke image path manual
+    if (item.image && item.image.startsWith("http")) return item.image;
+    if (item.image)
+      return `${import.meta.env.VITE_API_URL}/storage/${item.image}`;
+
+    // Fallback ke gambar default
+    return heroBg;
+  };
 
   // Data sesuai tab aktif
-  const displayedMain = activeTab === "berita" ? mainNews : mainEvents;
-  const displayedLatest = activeTab === "berita" ? latestNews : latestEvents;
+  const currentData = activeTab === "berita" ? newsData : eventData;
+  const mainItems = currentData.slice(0, 2); // 2 item untuk slider
+  const latestItems = currentData.slice(2, 6); // 4 item untuk grid
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-lg mb-4">{error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main>
@@ -156,110 +184,139 @@ export default function NewsPage() {
       {/* NEWS SECTION */}
       <section className="py-14 px-6 md:px-16 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-7xl mx-auto">
-          {/* Slider */}
-          <div ref={swiperRef} className="mb-12">
-            <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
-              navigation
-              pagination={{ clickable: true }}
-              autoplay={{ delay: 4500 }}
-              spaceBetween={24}
-              slidesPerView={1}
-            >
-              {/* SLIDER */}
-              {displayedMain.map((news, i) => (
-                <SwiperSlide key={i}>
-                  <article className="rounded-2xl overflow-hidden shadow-lg bg-white hover:shadow-xl transition-all duration-300">
-                    <div className="grid md:grid-cols-2">
-                      <div className="relative group">
-                        {/* 🔹 Tag Kategori */}
-                        <span
-                          className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                            activeTab === "berita"
-                              ? "bg-blue-600"
-                              : "bg-green-600"
-                          }`}
-                        >
-                          {activeTab === "berita" ? "Berita" : "Event"}
-                        </span>
+          {/* Kondisi jika tidak ada data */}
+          {currentData.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-gray-500 text-lg mb-2">
+                Tidak ada data tersedia
+              </div>
+              <p className="text-gray-400">
+                {activeTab === "berita"
+                  ? "Belum ada berita"
+                  : "Belum ada event"}
+              </p>
+            </div>
+          )}
 
-                        <img
-                          src={news.image}
-                          alt={news.title}
-                          className="w-full h-80 md:h-[420px] object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                      <div className="p-6 md:p-10 flex flex-col justify-center">
-                        <h3 className="text-xl md:text-3xl font-bold mb-3">
-                          {news.title}
-                        </h3>
-                        <p className="text-sm text-gray-500 mb-4">
-                          {news.date}
-                        </p>
-                        <p className="text-gray-700 mb-6">{news.desc}</p>
-                        <a
-                          href={`/${activeTab}/${i + 1}`} // i+1 = id dummy
-                          className="text-blue-600 hover:underline font-semibold"
-                        >
-                          Lihat Selengkapnya →
-                        </a>
-                      </div>
-                    </div>
-                  </article>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-
-          {/* Terbaru */}
-          <div className="flex items-center justify-between mb-6">
-            <h4 className="text-2xl font-bold text-blue-900">Terbaru</h4>
-            <a
-              href="#"
-              className="text-blue-600 hover:underline text-sm font-medium"
-            >
-              Lihat Semua →
-            </a>
-          </div>
-
-          {/* Grid */}
-          <div
-            ref={latestGridRef}
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
-            {/* GRID */}
-            {displayedLatest.map((n, i) => (
-              <a
-                key={i}
-                href={`/${activeTab}/${i + 1}`} // id sesuai index/dummy
-                className="rounded-xl overflow-hidden shadow bg-white hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-2"
+          {/* Slider - tampilkan jika ada data */}
+          {mainItems.length > 0 && (
+            <div ref={swiperRef} className="mb-12">
+              <Swiper
+                modules={[Navigation, Pagination, Autoplay]}
+                navigation
+                pagination={{ clickable: true }}
+                autoplay={{ delay: 4500 }}
+                spaceBetween={24}
+                slidesPerView={1}
               >
-                <div className="relative">
-                  {/* 🔹 Tag Kategori */}
-                  <span
-                    className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                      activeTab === "berita" ? "bg-blue-600" : "bg-green-600"
-                    }`}
-                  >
-                    {activeTab === "berita" ? "Berita" : "Event"}
-                  </span>
-                  <img
-                    src={n.image}
-                    alt={n.title}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
+                {mainItems.map((item) => (
+                  <SwiperSlide key={item.id}>
+                    <article className="rounded-2xl overflow-hidden shadow-lg bg-white hover:shadow-xl transition-all duration-300">
+                      <div className="grid md:grid-cols-2">
+                        <div className="relative group">
+                          <span
+                            className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white z-10 ${
+                              activeTab === "berita"
+                                ? "bg-blue-600"
+                                : "bg-green-600"
+                            }`}
+                          >
+                            {activeTab === "berita" ? "Berita" : "Event"}
+                          </span>
 
-                <div className="p-5 flex-1 flex flex-col">
-                  <p className="text-xs font-medium text-gray-500">{n.date}</p>
-                  <h5 className="text-base font-semibold mt-2">{n.title}</h5>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-4">
-                    {n.desc}
-                  </p>
-                </div>
-              </a>
-            ))}
-          </div>
+                          <img
+                            src={getImageUrl(item)}
+                            alt={item.title}
+                            className="w-full h-80 md:h-[420px] object-cover transform group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => {
+                              e.target.src = heroBg;
+                            }}
+                          />
+                        </div>
+                        <div className="p-6 md:p-10 flex flex-col justify-center">
+                          <h3 className="text-xl md:text-3xl font-bold mb-3">
+                            {item.title}
+                          </h3>
+                          <p className="text-sm text-gray-500 mb-4">
+                            {formatDate(item.created_at || item.tanggal)}
+                          </p>
+                          <p className="text-gray-700 mb-6">
+                            {item.description || item.isi}
+                          </p>
+                          <a
+                            href={`/${activeTab}/${item.id}`}
+                            className="text-blue-600 hover:underline font-semibold"
+                          >
+                            Lihat Selengkapnya →
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+          )}
+
+          {/* Section Terbaru - tampilkan jika ada data latest */}
+          {latestItems.length > 0 && (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <h4 className="text-2xl font-bold text-blue-900">Terbaru</h4>
+                <a
+                  href="#"
+                  className="text-blue-600 hover:underline text-sm font-medium"
+                >
+                  Lihat Semua →
+                </a>
+              </div>
+
+              <div
+                ref={latestGridRef}
+                className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+              >
+                {latestItems.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`/${activeTab}/${item.id}`}
+                    className="rounded-xl overflow-hidden shadow bg-white hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-2"
+                  >
+                    <div className="relative">
+                      <span
+                        className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white z-10 ${
+                          activeTab === "berita"
+                            ? "bg-blue-600"
+                            : "bg-green-600"
+                        }`}
+                      >
+                        {activeTab === "berita" ? "Berita" : "Event"}
+                      </span>
+                      <img
+                        src={getImageUrl(item)}
+                        alt={item.title}
+                        className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          e.target.src = heroBg;
+                        }}
+                      />
+                    </div>
+
+                    <div className="p-5 flex-1 flex flex-col">
+                      <p className="text-xs font-medium text-gray-500">
+                        {formatDate(item.created_at)}
+                      </p>
+                      <h5 className="text-base font-semibold mt-2">
+                        {item.title}
+                      </h5>
+                      <p className="text-sm text-gray-600 mt-2 line-clamp-4">
+                        {item.description || item.desc}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -267,6 +324,12 @@ export default function NewsPage() {
         .animate-fade-in {
           opacity: 1 !important;
           transform: translateY(0) !important;
+        }
+        .line-clamp-4 {
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </main>

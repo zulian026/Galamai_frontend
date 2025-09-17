@@ -2,9 +2,25 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import axios from "axios";
 import ReactQuill, { Quill } from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import {
+  Plus,
+  Save,
+  Trash2,
+  RotateCcw,
+  FileText,
+  Calendar,
+  Loader2,
+  Table,
+  Minus,
+  Code,
+  Lightbulb,
+  Search,
+  Edit3,
+  AlertCircle,
+} from "lucide-react";
 
 // Import table module for ReactQuill
-const Table = Quill.import("formats/table");
+const TableModule = Quill.import("formats/table");
 const TableRow = Quill.import("formats/table-row");
 const TableCell = Quill.import("formats/table-cell");
 const TableHeader = Quill.import("formats/table-header");
@@ -15,27 +31,37 @@ export default function AdminLayananPage() {
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const apiBase = "http://localhost:8000/api/layanans";
   const quillRef = useRef(null);
 
   const fetchLayanans = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await axios.get(apiBase);
       setLayanans(res.data);
     } catch (err) {
       console.error("Gagal fetch:", err);
+      setError("Gagal memuat data layanan. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadLayanan = async (id) => {
     try {
+      setError(null);
       const res = await axios.get(`${apiBase}/${id}`);
       setActiveId(res.data.id);
       setTitle(res.data.title);
       setDetails(res.data.details || "");
     } catch (err) {
       console.error("Gagal load:", err);
+      setError("Gagal memuat layanan. Silakan coba lagi.");
     }
   };
 
@@ -43,11 +69,18 @@ export default function AdminLayananPage() {
     setActiveId(null);
     setTitle("");
     setDetails("");
+    setError(null);
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!title.trim()) {
+      setError("Judul layanan harus diisi!");
+      return;
+    }
+
     setSaving(true);
+    setError(null);
     try {
       if (activeId) {
         await axios.put(`${apiBase}/${activeId}`, { title, details });
@@ -58,6 +91,7 @@ export default function AdminLayananPage() {
       clearForm();
     } catch (err) {
       console.error("Gagal simpan:", err);
+      setError("Gagal menyimpan layanan. Silakan coba lagi.");
     } finally {
       setSaving(false);
     }
@@ -66,12 +100,15 @@ export default function AdminLayananPage() {
   const handleDelete = async () => {
     if (!activeId) return;
     if (!window.confirm("Yakin hapus layanan ini?")) return;
+    
     try {
+      setError(null);
       await axios.delete(`${apiBase}/${activeId}`);
       await fetchLayanans();
       clearForm();
     } catch (err) {
       console.error("Gagal hapus:", err);
+      setError("Gagal menghapus layanan. Silakan coba lagi.");
     }
   };
 
@@ -85,9 +122,7 @@ export default function AdminLayananPage() {
       const rows = parseInt(prompt("Jumlah baris:", "3") || "3");
       const cols = parseInt(prompt("Jumlah kolom:", "3") || "3");
 
-      // Create table HTML structure
       let tableHTML = '<table class="custom-table"><tbody>';
-
       for (let i = 0; i < rows; i++) {
         tableHTML += "<tr>";
         for (let j = 0; j < cols; j++) {
@@ -99,14 +134,10 @@ export default function AdminLayananPage() {
         }
         tableHTML += "</tr>";
       }
-
       tableHTML += "</tbody></table><p><br></p>";
 
-      // Insert the HTML
       const clipboard = quill.clipboard;
       clipboard.dangerouslyPasteHTML(range.index, tableHTML);
-
-      // Move cursor after table
       quill.setSelection(range.index + tableHTML.length);
     }
   };
@@ -155,6 +186,11 @@ export default function AdminLayananPage() {
       }
     }
   };
+
+  // Filter layanans based on search
+  const filteredLayanans = layanans.filter((layanan) =>
+    layanan.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     fetchLayanans();
@@ -238,135 +274,217 @@ export default function AdminLayananPage() {
   ];
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-1/4 bg-white shadow-lg">
-        <div className="p-4 border-b">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-bold text-lg text-gray-800">Daftar Layanan</h2>
-            <button
-              onClick={clearForm}
-              className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition-colors"
-            >
-              + Baru
-            </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Manajemen Layanan</h1>
+            <p className="text-gray-600 mt-1">Kelola konten layanan perusahaan</p>
           </div>
-        </div>
-
-        <div
-          className="overflow-y-auto"
-          style={{ height: "calc(100vh - 80px)" }}
-        >
-          <div className="p-4 space-y-2">
-            {layanans.map((l) => (
-              <button
-                key={l.id}
-                onClick={() => loadLayanan(l.id)}
-                className={`block w-full text-left px-3 py-2 rounded transition-colors ${
-                  activeId === l.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                }`}
-              >
-                <div className="font-medium truncate">{l.title}</div>
-                {l.updated_at && (
-                  <div className="text-xs opacity-75 mt-1">
-                    Diubah: {new Date(l.updated_at).toLocaleDateString("id-ID")}
-                  </div>
-                )}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">
+              Total: {layanans.length} layanan
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Main Editor */}
-      <div className="flex-1 flex flex-col bg-white shadow-lg">
-        {/* Header */}
-        <div className="border-b px-6 py-4 bg-gray-50 flex-shrink-0">
-          <h1 className="text-xl font-bold text-gray-800">
-            {activeId ? "Edit Layanan" : "Buat Layanan Baru"}
-          </h1>
-          {activeId && (
-            <p className="text-sm text-gray-600 mt-1">ID: {activeId}</p>
-          )}
+      {/* Error Alert */}
+      {error && (
+        <div className="mx-6 mt-6 bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
+            <p className="text-red-800 flex-1">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-3 text-red-600 hover:text-red-800 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+      )}
 
-        {/* Form */}
-        <div className="flex-1 p-6 overflow-hidden">
-          <form
-            onSubmit={handleSave}
-            className="h-full flex flex-col space-y-4"
-          >
-            {/* Title Input */}
-            <div className="flex-shrink-0">
-              <label className="block font-medium mb-2 text-gray-700">
-                Judul Layanan
-              </label>
+      <div className="flex h-[calc(100vh-120px)]">
+        {/* Sidebar */}
+        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+          {/* Sidebar Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-semibold text-gray-900">Daftar Layanan</h2>
+              <button
+                onClick={clearForm}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <Plus size={16} />
+                Baru
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="Masukkan judul layanan..."
-                required
+                placeholder="Cari layanan..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+          </div>
 
-            {/* Content Editor */}
-            <div className="flex-1 flex flex-col min-h-0">
-              <label className="block font-medium mb-2 text-gray-700 flex-shrink-0">
-                Konten Layanan
-              </label>
-              <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden">
-                <ReactQuill
-                  ref={quillRef}
-                  value={details}
-                  onChange={setDetails}
-                  modules={modules}
-                  formats={formats}
-                  style={{ height: "100%" }}
-                  theme="snow"
-                  placeholder="Masukkan detail layanan..."
-                />
+          {/* Sidebar Content */}
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
               </div>
-            </div>
+            ) : filteredLayanans.length === 0 ? (
+              <div className="text-center py-8 px-6">
+                {searchTerm ? (
+                  <>
+                    <Search className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 text-sm">Tidak ada layanan yang cocok dengan pencarian</p>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 text-sm">Belum ada layanan</p>
+                    <p className="text-gray-400 text-xs mt-1">Klik tombol "Baru" untuk membuat layanan pertama</p>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 space-y-2">
+                {filteredLayanans.map((l) => (
+                  <button
+                    key={l.id}
+                    onClick={() => loadLayanan(l.id)}
+                    className={`block w-full text-left p-4 rounded-xl transition-all duration-200 group ${
+                      activeId === l.id
+                        ? "bg-blue-50 border-2 border-blue-200 shadow-sm"
+                        : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-medium truncate text-sm ${
+                          activeId === l.id ? "text-blue-900" : "text-gray-900"
+                        }`}>
+                          {l.title}
+                        </div>
+                        {l.updated_at && (
+                          <div className={`flex items-center gap-1 text-xs mt-2 ${
+                            activeId === l.id ? "text-blue-600" : "text-gray-500"
+                          }`}>
+                            <Calendar className="w-3 h-3" />
+                            {new Date(l.updated_at).toLocaleDateString("id-ID")}
+                          </div>
+                        )}
+                      </div>
+                      {activeId === l.id && (
+                        <Edit3 className="w-4 h-4 text-blue-600 flex-shrink-0 ml-2" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center pt-4 border-t flex-shrink-0">
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  disabled={saving || !title.trim()}
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-medium"
-                >
-                  {saving
-                    ? "Menyimpan..."
-                    : activeId
-                    ? "💾 Simpan Perubahan"
-                    : "✨ Buat Layanan"}
-                </button>
-
+        {/* Main Editor */}
+        <div className="flex-1 bg-white flex flex-col">
+          {/* Editor Header */}
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {activeId ? "Edit Layanan" : "Buat Layanan Baru"}
+                </h2>
+                {activeId && (
+                  <p className="text-sm text-gray-500 mt-1">ID: {activeId}</p>
+                )}
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={clearForm}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
                 >
-                  🔄 Reset
+                  <RotateCcw size={16} />
+                  Reset
                 </button>
+
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !title.trim()}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save size={16} />
+                  )}
+                  {saving ? "Menyimpan..." : activeId ? "Simpan Perubahan" : "Buat Layanan"}
+                </button>
+
+                {activeId && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    <Trash2 size={16} />
+                    Hapus
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Editor Content */}
+          <div className="flex-1 flex flex-col p-6 overflow-hidden">
+            <form onSubmit={handleSave} className="h-full flex flex-col space-y-5">
+              {/* Title Input */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Judul Layanan <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Masukkan judul layanan..."
+                  required
+                />
               </div>
 
-              {activeId && (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-                >
-                  🗑️ Hapus
-                </button>
-              )}
-            </div>
-          </form>
+              {/* Content Editor */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Konten Layanan
+                </label>
+                <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden bg-white">
+                  <ReactQuill
+                    ref={quillRef}
+                    value={details}
+                    onChange={setDetails}
+                    modules={modules}
+                    formats={formats}
+                    style={{ height: "100%" }}
+                    theme="snow"
+                    placeholder="Masukkan detail layanan..."
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -378,7 +496,7 @@ export default function AdminLayananPage() {
           border-left: none !important;
           border-right: none !important;
           border-bottom: 1px solid #e5e7eb !important;
-          padding: 12px !important;
+          padding: 12px 16px !important;
           background: #f9fafb !important;
           position: sticky !important;
           top: 0 !important;
@@ -388,56 +506,102 @@ export default function AdminLayananPage() {
         .ql-container {
           border: none !important;
           font-size: 14px !important;
-          height: calc(100% - 43px) !important;
+          height: calc(100% - 45px) !important;
           overflow-y: auto !important;
         }
 
         .ql-editor {
-          padding: 20px !important;
-          line-height: 1.6 !important;
-          min-height: 200px !important;
+          padding: 24px !important;
+          line-height: 1.7 !important;
+          min-height: 300px !important;
+          color: #374151 !important;
+        }
+
+        /* Custom Toolbar Button Icons */
+        .ql-insertTable .ql-stroke {
+          stroke: none !important;
+        }
+        .ql-insertTable:before {
+          content: "⊞" !important;
+          font-size: 16px !important;
+          color: #6b7280 !important;
+        }
+
+        .ql-insertDivider .ql-stroke {
+          stroke: none !important;
+        }
+        .ql-insertDivider:before {
+          content: "⚊" !important;
+          font-size: 16px !important;
+          color: #6b7280 !important;
+        }
+
+        .ql-insertCode .ql-stroke {
+          stroke: none !important;
+        }
+        .ql-insertCode:before {
+          content: "</>" !important;
+          font-size: 12px !important;
+          color: #6b7280 !important;
+          font-weight: bold !important;
+        }
+
+        .ql-insertCallout .ql-stroke {
+          stroke: none !important;
+        }
+        .ql-insertCallout:before {
+          content: "💡" !important;
+          font-size: 14px !important;
         }
 
         /* Custom Table Styling */
         .ql-editor .custom-table {
           border-collapse: collapse !important;
           width: 100% !important;
-          margin: 15px 0 !important;
+          margin: 20px 0 !important;
           border: 1px solid #d1d5db !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
         }
 
         .ql-editor .custom-table td,
         .ql-editor .custom-table th {
           border: 1px solid #d1d5db !important;
-          padding: 8px 12px !important;
-          min-width: 100px !important;
+          padding: 12px 16px !important;
+          min-width: 120px !important;
           vertical-align: top !important;
         }
 
         .ql-editor .custom-table th {
           background-color: #f3f4f6 !important;
-          font-weight: bold !important;
+          font-weight: 600 !important;
           text-align: left !important;
+          color: #374151 !important;
         }
 
         .ql-editor .custom-table tr:nth-child(even) {
           background-color: #f9fafb !important;
         }
 
+        .ql-editor .custom-table tr:hover {
+          background-color: #f3f4f6 !important;
+        }
+
         /* Custom Divider */
         .ql-editor .custom-divider {
-          margin: 20px 0 !important;
+          margin: 24px 0 !important;
           border: none !important;
-          border-top: 2px solid #d1d5db !important;
+          border-top: 2px solid #e5e7eb !important;
           height: 0 !important;
         }
 
         /* Callout Styling */
         .ql-editor .callout {
-          padding: 15px !important;
-          margin: 15px 0 !important;
-          border-radius: 6px !important;
+          padding: 16px !important;
+          margin: 20px 0 !important;
+          border-radius: 8px !important;
           border-left: 4px solid !important;
+          font-size: 14px !important;
         }
 
         .ql-editor .callout-info {
@@ -466,53 +630,68 @@ export default function AdminLayananPage() {
 
         /* Code Block Styling */
         .ql-editor pre.ql-syntax {
-          background: #f3f4f6 !important;
-          border: 1px solid #d1d5db !important;
-          border-radius: 6px !important;
-          padding: 15px !important;
-          margin: 15px 0 !important;
+          background: #1f2937 !important;
+          border: 1px solid #374151 !important;
+          border-radius: 8px !important;
+          padding: 20px !important;
+          margin: 20px 0 !important;
           overflow-x: auto !important;
-          font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace !important;
+          font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Source Code Pro", monospace !important;
           font-size: 13px !important;
-          line-height: 1.4 !important;
+          line-height: 1.5 !important;
+          color: #e5e7eb !important;
         }
 
         /* Blockquote Styling */
         .ql-editor blockquote {
           border-left: 4px solid #6b7280 !important;
-          padding-left: 16px !important;
-          margin: 16px 0 !important;
+          padding: 16px 20px !important;
+          margin: 20px 0 !important;
           font-style: italic !important;
           color: #4b5563 !important;
           background-color: #f9fafb !important;
-          padding: 10px 16px !important;
-          border-radius: 0 6px 6px 0 !important;
+          border-radius: 0 8px 8px 0 !important;
+          position: relative !important;
         }
 
-        /* Custom Button Icons */
-        .ql-insertTable:before {
-          content: "📊" !important;
-          font-size: 14px !important;
+        .ql-editor blockquote:before {
+          content: '"' !important;
+          position: absolute !important;
+          left: -8px !important;
+          top: -8px !important;
+          font-size: 48px !important;
+          color: #d1d5db !important;
+          font-family: Georgia, serif !important;
         }
 
-        .ql-insertDivider:before {
-          content: "➖" !important;
-          font-size: 14px !important;
+        /* Improve list styling */
+        .ql-editor ul, .ql-editor ol {
+          margin: 16px 0 !important;
+          padding-left: 24px !important;
         }
 
-        .ql-insertCode:before {
-          content: "💻" !important;
-          font-size: 14px !important;
+        .ql-editor li {
+          margin-bottom: 8px !important;
+          line-height: 1.6 !important;
         }
 
-        .ql-insertCallout:before {
-          content: "💡" !important;
-          font-size: 14px !important;
+        /* Link styling */
+        .ql-editor a {
+          color: #3b82f6 !important;
+          text-decoration: none !important;
+          border-bottom: 1px solid transparent !important;
+          transition: border-color 0.2s !important;
         }
 
-        /* Prevent toolbar from being cut off */
-        .ql-toolbar .ql-formats {
-          margin-right: 8px !important;
+        .ql-editor a:hover {
+          border-bottom-color: #3b82f6 !important;
+        }
+
+        /* Image styling */
+        .ql-editor img {
+          border-radius: 8px !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+          margin: 16px 0 !important;
         }
 
         /* Improve scrolling */
@@ -521,17 +700,26 @@ export default function AdminLayananPage() {
         }
 
         .ql-editor::-webkit-scrollbar-track {
-          background: #f1f1f1;
+          background: #f1f5f9;
           border-radius: 4px;
         }
 
         .ql-editor::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
+          background: #cbd5e1;
           border-radius: 4px;
         }
 
         .ql-editor::-webkit-scrollbar-thumb:hover {
-          background: #a1a1a1;
+          background: #94a3b8;
+        }
+
+        /* Prevent toolbar overflow */
+        .ql-toolbar .ql-formats {
+          margin-right: 8px !important;
+        }
+
+        .ql-toolbar .ql-formats:last-child {
+          margin-right: 0 !important;
         }
       `}</style>
     </div>

@@ -130,7 +130,7 @@ export default function DashboardLayout() {
             },
             {
               name: "Berita",
-              path: "/dashboard/konten/berita",
+              path: "/dashboard/berita",
             },
           ],
         },
