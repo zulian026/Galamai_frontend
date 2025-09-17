@@ -100,7 +100,7 @@ export default function AdminLayananPage() {
   const handleDelete = async () => {
     if (!activeId) return;
     if (!window.confirm("Yakin hapus layanan ini?")) return;
-    
+
     try {
       setError(null);
       await axios.delete(`${apiBase}/${activeId}`);
@@ -279,8 +279,12 @@ export default function AdminLayananPage() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Manajemen Layanan</h1>
-            <p className="text-gray-600 mt-1">Kelola konten layanan perusahaan</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Manajemen Layanan
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Kelola konten layanan perusahaan
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">
@@ -346,13 +350,17 @@ export default function AdminLayananPage() {
                 {searchTerm ? (
                   <>
                     <Search className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">Tidak ada layanan yang cocok dengan pencarian</p>
+                    <p className="text-gray-500 text-sm">
+                      Tidak ada layanan yang cocok dengan pencarian
+                    </p>
                   </>
                 ) : (
                   <>
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-500 text-sm">Belum ada layanan</p>
-                    <p className="text-gray-400 text-xs mt-1">Klik tombol "Baru" untuk membuat layanan pertama</p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      Klik tombol "Baru" untuk membuat layanan pertama
+                    </p>
                   </>
                 )}
               </div>
@@ -370,15 +378,23 @@ export default function AdminLayananPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className={`font-medium truncate text-sm ${
-                          activeId === l.id ? "text-blue-900" : "text-gray-900"
-                        }`}>
+                        <div
+                          className={`font-medium truncate text-sm ${
+                            activeId === l.id
+                              ? "text-blue-900"
+                              : "text-gray-900"
+                          }`}
+                        >
                           {l.title}
                         </div>
                         {l.updated_at && (
-                          <div className={`flex items-center gap-1 text-xs mt-2 ${
-                            activeId === l.id ? "text-blue-600" : "text-gray-500"
-                          }`}>
+                          <div
+                            className={`flex items-center gap-1 text-xs mt-2 ${
+                              activeId === l.id
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                            }`}
+                          >
                             <Calendar className="w-3 h-3" />
                             {new Date(l.updated_at).toLocaleDateString("id-ID")}
                           </div>
@@ -408,7 +424,7 @@ export default function AdminLayananPage() {
                   <p className="text-sm text-gray-500 mt-1">ID: {activeId}</p>
                 )}
               </div>
-              
+
               {/* Action Buttons */}
               <div className="flex items-center gap-3">
                 <button
@@ -430,7 +446,11 @@ export default function AdminLayananPage() {
                   ) : (
                     <Save size={16} />
                   )}
-                  {saving ? "Menyimpan..." : activeId ? "Simpan Perubahan" : "Buat Layanan"}
+                  {saving
+                    ? "Menyimpan..."
+                    : activeId
+                    ? "Simpan Perubahan"
+                    : "Buat Layanan"}
                 </button>
 
                 {activeId && (
@@ -449,7 +469,10 @@ export default function AdminLayananPage() {
 
           {/* Editor Content */}
           <div className="flex-1 flex flex-col p-6 overflow-hidden">
-            <form onSubmit={handleSave} className="h-full flex flex-col space-y-5">
+            <form
+              onSubmit={handleSave}
+              className="h-full flex flex-col space-y-5"
+            >
               {/* Title Input */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -636,7 +659,8 @@ export default function AdminLayananPage() {
           padding: 20px !important;
           margin: 20px 0 !important;
           overflow-x: auto !important;
-          font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Source Code Pro", monospace !important;
+          font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono",
+            "Source Code Pro", monospace !important;
           font-size: 13px !important;
           line-height: 1.5 !important;
           color: #e5e7eb !important;
@@ -665,7 +689,8 @@ export default function AdminLayananPage() {
         }
 
         /* Improve list styling */
-        .ql-editor ul, .ql-editor ol {
+        .ql-editor ul,
+        .ql-editor ol {
           margin: 16px 0 !important;
           padding-left: 24px !important;
         }
