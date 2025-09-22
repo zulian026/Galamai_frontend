@@ -58,9 +58,9 @@ export default function PertanyaanPage() {
             </p>
           </div>
 
-          {/* Identitas Pelapor */}
+          {/* Identitas */}
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Identitas Pelapor
+            Identitas
           </h2>
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <InputField
