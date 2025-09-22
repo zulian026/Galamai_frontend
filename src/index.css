@@ -112,3 +112,28 @@ body {
   color: #666;
   font-style: italic;
 }
+
+::-webkit-scrollbar {
+  width: 4px;
+  /* Lebar scrollbar */
+}
+
+/* Track (bagian belakang scrollbar) */
+::-webkit-scrollbar-track {
+  background: white; /* Warna background track */
+  border-radius: 10px;
+}
+
+/* Handle (bagian yang bisa di-scroll) */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #003366, #003366); /* Gradient warna */
+  border-radius: 10px;
+}
+
+/* Hover effect */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #003366, #003366);
+}
+html {
+  scroll-behavior: smooth;
+}

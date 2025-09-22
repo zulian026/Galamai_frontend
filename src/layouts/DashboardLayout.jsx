@@ -122,7 +122,7 @@ export default function DashboardLayout() {
           children: [
             {
               name: "Artikel",
-              path: "/dashboard/konten/artikel",
+              path: "/dashboard/konten/Artikel",
             },
             {
               name: "Aplikasi Layanan",
@@ -131,6 +131,10 @@ export default function DashboardLayout() {
             {
               name: "Berita",
               path: "/dashboard/berita",
+            },
+            {
+              name: "Profil",
+              path: "/dashboard/profil",
             },
           ],
         },

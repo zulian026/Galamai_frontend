@@ -17,26 +17,30 @@ import {
   Search,
   Edit3,
   AlertCircle,
-  X, // Added missing X icon import
+  X,
+  Upload,
+  Image as ImageIcon,
+  User,
 } from "lucide-react";
 
 // Import table module for ReactQuill
-  // const TableModule = Quill.import("formats/table");
-  // const TableRow = Quill.import("formats/table-row");
-  // const TableCell = Quill.import("formats/table-cell");
-  // const TableHeader = Quill.import("formats/table-header");
+// const TableModule = Quill.import("formats/table");
+// const TableRow = Quill.import("formats/table-row");
+// const TableCell = Quill.import("formats/table-cell");
+// const TableHeader = Quill.import("formats/table-header");
 
-export default function AdminLayananPage() {
-  const [layanans, setLayanans] = useState([]);
+export default function AdminProfilPage() {
+  const [profils, setProfils] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const apiBase = "http://localhost:8000/api/layanans";
+  const apiBase = "http://localhost:8000/api/profil";
   const quillRef = useRef(null);
 
   // Function to get auth token from localStorage
@@ -78,22 +82,22 @@ export default function AdminLayananPage() {
     }
   );
 
-  const fetchLayanans = async () => {
+  const fetchProfils = async () => {
     try {
       setLoading(true);
       setError(null);
       // Use regular axios for public endpoints (index, show)
       const res = await axios.get(apiBase);
-      setLayanans(res.data);
+      setProfils(res.data);
     } catch (err) {
       console.error("Gagal fetch:", err);
-      setError("Gagal memuat data layanan. Silakan coba lagi.");
+      setError("Gagal memuat data profil. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadLayanan = async (id) => {
+  const loadProfil = async (id) => {
     try {
       setError(null);
       // Use regular axios for public endpoints (index, show)
@@ -103,7 +107,7 @@ export default function AdminLayananPage() {
       setDetails(res.data.details || "");
     } catch (err) {
       console.error("Gagal load:", err);
-      setError("Gagal memuat layanan. Silakan coba lagi.");
+      setError("Gagal memuat profil. Silakan coba lagi.");
     }
   };
 
@@ -117,7 +121,7 @@ export default function AdminLayananPage() {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
-      setError("Judul layanan harus diisi!");
+      setError("Judul profil harus diisi!");
       return;
     }
 
@@ -131,14 +135,17 @@ export default function AdminLayananPage() {
         // Use apiClient for authenticated endpoints
         await apiClient.post("", { title, details });
       }
-      await fetchLayanans();
+      await fetchProfils();
       clearForm();
     } catch (err) {
       console.error("Gagal simpan:", err);
       if (err.response?.status === 401) {
         setError("Tidak terautentikasi. Silakan login kembali.");
+      } else if (err.response?.data?.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        setError(errorMessages.join(", "));
       } else {
-        setError("Gagal menyimpan layanan. Silakan coba lagi.");
+        setError("Gagal menyimpan profil. Silakan coba lagi.");
       }
     } finally {
       setSaving(false);
@@ -147,20 +154,20 @@ export default function AdminLayananPage() {
 
   const handleDelete = async () => {
     if (!activeId) return;
-    if (!window.confirm("Yakin hapus layanan ini?")) return;
+    if (!window.confirm("Yakin hapus profil ini?")) return;
 
     try {
       setError(null);
       // Use apiClient for authenticated endpoints
       await apiClient.delete(`/${activeId}`);
-      await fetchLayanans();
+      await fetchProfils();
       clearForm();
     } catch (err) {
       console.error("Gagal hapus:", err);
       if (err.response?.status === 401) {
         setError("Tidak terautentikasi. Silakan login kembali.");
       } else {
-        setError("Gagal menghapus layanan. Silakan coba lagi.");
+        setError("Gagal menghapus profil. Silakan coba lagi.");
       }
     }
   };
@@ -240,13 +247,13 @@ export default function AdminLayananPage() {
     }
   };
 
-  // Filter layanans based on search
-  const filteredLayanans = layanans.filter((layanan) =>
-    layanan.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter profils based on search
+  const filteredProfils = profils.filter((profil) =>
+    profil.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
-    fetchLayanans();
+    fetchProfils();
   }, []);
 
   // Memoized modules configuration
@@ -333,15 +340,15 @@ export default function AdminLayananPage() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Manajemen Layanan
+              Manajemen Profil
             </h1>
             <p className="text-gray-600 mt-1">
-              Kelola konten layanan perusahaan
+              Kelola konten profil perusahaan
             </p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">
-              Total: {layanans.length} layanan
+              Total: {profils.length} profil
             </span>
           </div>
         </div>
@@ -369,7 +376,7 @@ export default function AdminLayananPage() {
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-semibold text-gray-900">Daftar Layanan</h2>
+              <h2 className="font-semibold text-gray-900">Daftar Profil</h2>
               <button
                 onClick={clearForm}
                 className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
@@ -384,7 +391,7 @@ export default function AdminLayananPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Cari layanan..."
+                placeholder="Cari profil..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -398,33 +405,33 @@ export default function AdminLayananPage() {
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
               </div>
-            ) : filteredLayanans.length === 0 ? (
+            ) : filteredProfils.length === 0 ? (
               <div className="text-center py-8 px-6">
                 {searchTerm ? (
                   <>
                     <Search className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-500 text-sm">
-                      Tidak ada layanan yang cocok dengan pencarian
+                      Tidak ada profil yang cocok dengan pencarian
                     </p>
                   </>
                 ) : (
                   <>
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">Belum ada layanan</p>
+                    <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 text-sm">Belum ada profil</p>
                     <p className="text-gray-400 text-xs mt-1">
-                      Klik tombol "Baru" untuk membuat layanan pertama
+                      Klik tombol "Baru" untuk membuat profil pertama
                     </p>
                   </>
                 )}
               </div>
             ) : (
               <div className="p-4 space-y-2">
-                {filteredLayanans.map((l) => (
+                {filteredProfils.map((p) => (
                   <button
-                    key={l.id}
-                    onClick={() => loadLayanan(l.id)}
+                    key={p.id}
+                    onClick={() => loadProfil(p.id)}
                     className={`block w-full text-left p-4 rounded-xl transition-all duration-200 group ${
-                      activeId === l.id
+                      activeId === p.id
                         ? "bg-blue-50 border-2 border-blue-200 shadow-sm"
                         : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
                     }`}
@@ -433,27 +440,27 @@ export default function AdminLayananPage() {
                       <div className="flex-1 min-w-0">
                         <div
                           className={`font-medium truncate text-sm ${
-                            activeId === l.id
+                            activeId === p.id
                               ? "text-blue-900"
                               : "text-gray-900"
                           }`}
                         >
-                          {l.title}
+                          {p.title}
                         </div>
-                        {l.updated_at && (
+                        {p.updated_at && (
                           <div
                             className={`flex items-center gap-1 text-xs mt-2 ${
-                              activeId === l.id
+                              activeId === p.id
                                 ? "text-blue-600"
                                 : "text-gray-500"
                             }`}
                           >
                             <Calendar className="w-3 h-3" />
-                            {new Date(l.updated_at).toLocaleDateString("id-ID")}
+                            {new Date(p.updated_at).toLocaleDateString("id-ID")}
                           </div>
                         )}
                       </div>
-                      {activeId === l.id && (
+                      {activeId === p.id && (
                         <Edit3 className="w-4 h-4 text-blue-600 flex-shrink-0 ml-2" />
                       )}
                     </div>
@@ -471,7 +478,7 @@ export default function AdminLayananPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {activeId ? "Edit Layanan" : "Buat Layanan Baru"}
+                  {activeId ? "Edit Profil" : "Buat Profil Baru"}
                 </h2>
                 {activeId && (
                   <p className="text-sm text-gray-500 mt-1">ID: {activeId}</p>
@@ -503,7 +510,7 @@ export default function AdminLayananPage() {
                     ? "Menyimpan..."
                     : activeId
                     ? "Simpan Perubahan"
-                    : "Buat Layanan"}
+                    : "Buat Profil"}
                 </button>
 
                 {activeId && (
@@ -529,14 +536,14 @@ export default function AdminLayananPage() {
               {/* Title Input */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Judul Layanan <span className="text-red-500">*</span>
+                  Judul Profil <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Masukkan judul layanan..."
+                  placeholder="Masukkan judul profil..."
                   required
                 />
               </div>
@@ -544,7 +551,7 @@ export default function AdminLayananPage() {
               {/* Content Editor */}
               <div className="flex-1 flex flex-col min-h-0">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Konten Layanan
+                  Konten Profil
                 </label>
                 <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden bg-white">
                   <ReactQuill
@@ -555,7 +562,7 @@ export default function AdminLayananPage() {
                     formats={formats}
                     style={{ height: "100%" }}
                     theme="snow"
-                    placeholder="Masukkan detail layanan..."
+                    placeholder="Masukkan detail profil..."
                   />
                 </div>
               </div>
@@ -565,241 +572,243 @@ export default function AdminLayananPage() {
       </div>
 
       {/* Enhanced Custom CSS */}
-      <style jsx global>{`
-        /* Quill Editor Styling */
-        .ql-toolbar {
-          border-top: none !important;
-          border-left: none !important;
-          border-right: none !important;
-          border-bottom: 1px solid #e5e7eb !important;
-          padding: 12px 16px !important;
-          background: #f9fafb !important;
-          position: sticky !important;
-          top: 0 !important;
-          z-index: 10 !important;
-        }
+      <style jsx global>
+        {`
+          /* Quill Editor Styling */
+          .ql-toolbar {
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            padding: 12px 16px !important;
+            background: #f9fafb !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 10 !important;
+          }
 
-        .ql-container {
-          border: none !important;
-          font-size: 14px !important;
-          height: calc(100% - 45px) !important;
-          overflow-y: auto !important;
-        }
+          .ql-container {
+            border: none !important;
+            font-size: 14px !important;
+            height: calc(100% - 45px) !important;
+            overflow-y: auto !important;
+          }
 
-        .ql-editor {
-          padding: 24px !important;
-          line-height: 1.7 !important;
-          min-height: 300px !important;
-          color: #374151 !important;
-        }
+          .ql-editor {
+            padding: 24px !important;
+            line-height: 1.7 !important;
+            min-height: 300px !important;
+            color: #374151 !important;
+          }
 
-        /* Custom Toolbar Button Icons */
-        .ql-insertTable .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertTable:before {
-          content: "⊞" !important;
-          font-size: 16px !important;
-          color: #6b7280 !important;
-        }
+          /* Custom Toolbar Button Icons */
+          .ql-insertTable .ql-stroke {
+            stroke: none !important;
+          }
+          .ql-insertTable:before {
+            content: "⊞" !important;
+            font-size: 16px !important;
+            color: #6b7280 !important;
+          }
 
-        .ql-insertDivider .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertDivider:before {
-          content: "⚊" !important;
-          font-size: 16px !important;
-          color: #6b7280 !important;
-        }
+          .ql-insertDivider .ql-stroke {
+            stroke: none !important;
+          }
+          .ql-insertDivider:before {
+            content: "⚊" !important;
+            font-size: 16px !important;
+            color: #6b7280 !important;
+          }
 
-        .ql-insertCode .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertCode:before {
-          content: "</>" !important;
-          font-size: 12px !important;
-          color: #6b7280 !important;
-          font-weight: bold !important;
-        }
+          .ql-insertCode .ql-stroke {
+            stroke: none !important;
+          }
+          .ql-insertCode:before {
+            content: "</>" !important;
+            font-size: 12px !important;
+            color: #6b7280 !important;
+            font-weight: bold !important;
+          }
 
-        .ql-insertCallout .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertCallout:before {
-          content: "💡" !important;
-          font-size: 14px !important;
-        }
+          .ql-insertCallout .ql-stroke {
+            stroke: none !important;
+          }
+          .ql-insertCallout:before {
+            content: "💡" !important;
+            font-size: 14px !important;
+          }
 
-        /* Custom Table Styling */
-        .ql-editor .custom-table {
-          border-collapse: collapse !important;
-          width: 100% !important;
-          margin: 20px 0 !important;
-          border: 1px solid #d1d5db !important;
-          border-radius: 8px !important;
-          overflow: hidden !important;
-        }
+          /* Custom Table Styling */
+          .ql-editor .custom-table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin: 20px 0 !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+          }
 
-        .ql-editor .custom-table td,
-        .ql-editor .custom-table th {
-          border: 1px solid #d1d5db !important;
-          padding: 12px 16px !important;
-          min-width: 120px !important;
-          vertical-align: top !important;
-        }
+          .ql-editor .custom-table td,
+          .ql-editor .custom-table th {
+            border: 1px solid #d1d5db !important;
+            padding: 12px 16px !important;
+            min-width: 120px !important;
+            vertical-align: top !important;
+          }
 
-        .ql-editor .custom-table th {
-          background-color: #f3f4f6 !important;
-          font-weight: 600 !important;
-          text-align: left !important;
-          color: #374151 !important;
-        }
+          .ql-editor .custom-table th {
+            background-color: #f3f4f6 !important;
+            font-weight: 600 !important;
+            text-align: left !important;
+            color: #374151 !important;
+          }
 
-        .ql-editor .custom-table tr:nth-child(even) {
-          background-color: #f9fafb !important;
-        }
+          .ql-editor .custom-table tr:nth-child(even) {
+            background-color: #f9fafb !important;
+          }
 
-        .ql-editor .custom-table tr:hover {
-          background-color: #f3f4f6 !important;
-        }
+          .ql-editor .custom-table tr:hover {
+            background-color: #f3f4f6 !important;
+          }
 
-        /* Custom Divider */
-        .ql-editor .custom-divider {
-          margin: 24px 0 !important;
-          border: none !important;
-          border-top: 2px solid #e5e7eb !important;
-          height: 0 !important;
-        }
+          /* Custom Divider */
+          .ql-editor .custom-divider {
+            margin: 24px 0 !important;
+            border: none !important;
+            border-top: 2px solid #e5e7eb !important;
+            height: 0 !important;
+          }
 
-        /* Callout Styling */
-        .ql-editor .callout {
-          padding: 16px !important;
-          margin: 20px 0 !important;
-          border-radius: 8px !important;
-          border-left: 4px solid !important;
-          font-size: 14px !important;
-        }
+          /* Callout Styling */
+          .ql-editor .callout {
+            padding: 16px !important;
+            margin: 20px 0 !important;
+            border-radius: 8px !important;
+            border-left: 4px solid !important;
+            font-size: 14px !important;
+          }
 
-        .ql-editor .callout-info {
-          background-color: #eff6ff !important;
-          border-left-color: #3b82f6 !important;
-          color: #1e40af !important;
-        }
+          .ql-editor .callout-info {
+            background-color: #eff6ff !important;
+            border-left-color: #3b82f6 !important;
+            color: #1e40af !important;
+          }
 
-        .ql-editor .callout-warning {
-          background-color: #fffbeb !important;
-          border-left-color: #f59e0b !important;
-          color: #92400e !important;
-        }
+          .ql-editor .callout-warning {
+            background-color: #fffbeb !important;
+            border-left-color: #f59e0b !important;
+            color: #92400e !important;
+          }
 
-        .ql-editor .callout-success {
-          background-color: #f0fdf4 !important;
-          border-left-color: #10b981 !important;
-          color: #065f46 !important;
-        }
+          .ql-editor .callout-success {
+            background-color: #f0fdf4 !important;
+            border-left-color: #10b981 !important;
+            color: #065f46 !important;
+          }
 
-        .ql-editor .callout-error {
-          background-color: #fef2f2 !important;
-          border-left-color: #ef4444 !important;
-          color: #991b1b !important;
-        }
+          .ql-editor .callout-error {
+            background-color: #fef2f2 !important;
+            border-left-color: #ef4444 !important;
+            color: #991b1b !important;
+          }
 
-        /* Code Block Styling */
-        .ql-editor pre.ql-syntax {
-          background: #1f2937 !important;
-          border: 1px solid #374151 !important;
-          border-radius: 8px !important;
-          padding: 20px !important;
-          margin: 20px 0 !important;
-          overflow-x: auto !important;
-          font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono",
-            "Source Code Pro", monospace !important;
-          font-size: 13px !important;
-          line-height: 1.5 !important;
-          color: #e5e7eb !important;
-        }
+          /* Code Block Styling */
+          .ql-editor pre.ql-syntax {
+            background: #1f2937 !important;
+            border: 1px solid #374151 !important;
+            border-radius: 8px !important;
+            padding: 20px !important;
+            margin: 20px 0 !important;
+            overflow-x: auto !important;
+            font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono",
+              "Source Code Pro", monospace !important;
+            font-size: 13px !important;
+            line-height: 1.5 !important;
+            color: #e5e7eb !important;
+          }
 
-        /* Blockquote Styling */
-        .ql-editor blockquote {
-          border-left: 4px solid #6b7280 !important;
-          padding: 16px 20px !important;
-          margin: 20px 0 !important;
-          font-style: italic !important;
-          color: #4b5563 !important;
-          background-color: #f9fafb !important;
-          border-radius: 0 8px 8px 0 !important;
-          position: relative !important;
-        }
+          /* Blockquote Styling */
+          .ql-editor blockquote {
+            border-left: 4px solid #6b7280 !important;
+            padding: 16px 20px !important;
+            margin: 20px 0 !important;
+            font-style: italic !important;
+            color: #4b5563 !important;
+            background-color: #f9fafb !important;
+            border-radius: 0 8px 8px 0 !important;
+            position: relative !important;
+          }
 
-        .ql-editor blockquote:before {
-          content: '"' !important;
-          position: absolute !important;
-          left: -8px !important;
-          top: -8px !important;
-          font-size: 48px !important;
-          color: #d1d5db !important;
-          font-family: Georgia, serif !important;
-        }
+          .ql-editor blockquote:before {
+            content: '"' !important;
+            position: absolute !important;
+            left: -8px !important;
+            top: -8px !important;
+            font-size: 48px !important;
+            color: #d1d5db !important;
+            font-family: Georgia, serif !important;
+          }
 
-        /* Improve list styling */
-        .ql-editor ul,
-        .ql-editor ol {
-          margin: 16px 0 !important;
-          padding-left: 24px !important;
-        }
+          /* Improve list styling */
+          .ql-editor ul,
+          .ql-editor ol {
+            margin: 16px 0 !important;
+            padding-left: 24px !important;
+          }
 
-        .ql-editor li {
-          margin-bottom: 8px !important;
-          line-height: 1.6 !important;
-        }
+          .ql-editor li {
+            margin-bottom: 8px !important;
+            line-height: 1.6 !important;
+          }
 
-        /* Link styling */
-        .ql-editor a {
-          color: #3b82f6 !important;
-          text-decoration: none !important;
-          border-bottom: 1px solid transparent !important;
-          transition: border-color 0.2s !important;
-        }
+          /* Link styling */
+          .ql-editor a {
+            color: #3b82f6 !important;
+            text-decoration: none !important;
+            border-bottom: 1px solid transparent !important;
+            transition: border-color 0.2s !important;
+          }
 
-        .ql-editor a:hover {
-          border-bottom-color: #3b82f6 !important;
-        }
+          .ql-editor a:hover {
+            border-bottom-color: #3b82f6 !important;
+          }
 
-        /* Image styling */
-        .ql-editor img {
-          border-radius: 8px !important;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-          margin: 16px 0 !important;
-        }
+          /* Image styling */
+          .ql-editor img {
+            border-radius: 8px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            margin: 16px 0 !important;
+          }
 
-        /* Improve scrolling */
-        .ql-editor::-webkit-scrollbar {
-          width: 8px;
-        }
+          /* Improve scrolling */
+          .ql-editor::-webkit-scrollbar {
+            width: 8px;
+          }
 
-        .ql-editor::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 4px;
-        }
+          .ql-editor::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+          }
 
-        .ql-editor::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 4px;
-        }
+          .ql-editor::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+          }
 
-        .ql-editor::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
+          .ql-editor::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
 
-        /* Prevent toolbar overflow */
-        .ql-toolbar .ql-formats {
-          margin-right: 8px !important;
-        }
+          /* Prevent toolbar overflow */
+          .ql-toolbar .ql-formats {
+            margin-right: 8px !important;
+          }
 
-        .ql-toolbar .ql-formats:last-child {
-          margin-right: 0 !important;
-        }
-      `}</style>
+          .ql-toolbar .ql-formats:last-child {
+            margin-right: 0 !important;
+          }
+        `}
+      </style>
     </div>
   );
 }

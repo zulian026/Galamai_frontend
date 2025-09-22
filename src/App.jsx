@@ -31,6 +31,9 @@ import AplikasiDashboard from "./pages/Dashboard/Konten/Layanan_Aplikasi/Aplikas
 import LayananPage from "./pages/Dashboard/Layanan/LayananPage";
 import NewsDetailPage from "./pages/Berita/NewsDetailView";
 import BeritaEvent from "./pages/Dashboard/Konten/Berita/BeritaEvent";
+import Artikel from "./pages/Dashboard/Konten/Artikel/Artikel";
+import ArticleDetailPage from "./pages/Berita/ArticleDetailView";
+import AdminProfilPage from "./pages/Dashboard/Konten/Profil/ProfilPage";
 
 export default function App() {
   return (
@@ -58,6 +61,7 @@ export default function App() {
             // Di App.jsx atau router config
             <Route path="/berita" element={<NewsPage />} />
             <Route path="/:type/:id" element={<NewsDetailPage />} />
+            <Route path="/artikel/:id" element={<ArticleDetailPage />} />
           </Route>
 
           {/* Auth */}
@@ -81,6 +85,8 @@ export default function App() {
             />
             <Route path="/dashboard/Layanan" element={<LayananPage />} />
             <Route path="/dashboard/Berita" element={<BeritaEvent />} />
+            <Route path="/dashboard/konten/artikel" element={<Artikel />} />
+            <Route path="/dashboard/profil" element={<AdminProfilPage />} />
 
             {/* kalau ada halaman lain tambahin disini */}
           </Route>

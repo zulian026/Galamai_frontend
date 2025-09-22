@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Search,
   Calendar,
@@ -7,143 +8,77 @@ import {
   Filter,
   Grid,
   List,
+  Loader2,
+  Eye,
 } from "lucide-react";
-import articleImage from "../../assets/images/hero-bg.png"; // ganti sesuai aset kamu
-import heroBackground from "../../assets/images/hero-bg.png"; // ganti sesuai aset hero
+import { artikelService } from "../../services/artikelService"; // sesuaikan path
+import heroBackground from "../../assets/images/hero-bg.png";
 
 export default function ArticlePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [viewMode, setViewMode] = useState("grid"); // grid or list
   const [currentPage, setCurrentPage] = useState(1);
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const itemsPerPage = 6;
 
-  // Data artikel
-  const articles = [
-    {
-      id: 1,
-      title: "Panduan Membaca Label Gizi pada Produk Makanan",
-      description:
-        "Banyak konsumen yang masih belum memahami informasi pada label gizi. Artikel ini membahas cara membaca label dengan benar untuk mengetahui kandungan gizi, kalori, dan bahan tambahan yang digunakan.",
-      excerpt:
-        "Pelajari cara membaca label gizi dengan benar untuk membuat pilihan makanan yang lebih sehat...",
-      image: articleImage,
-      category: "Edukasi",
-      author: "Dr. Sari Nutritionist",
-      date: "15 Agustus 2024",
-      readTime: "5 menit",
-      slug: "panduan-membaca-label-gizi",
-    },
-    {
-      id: 2,
-      title: "Cara Menyimpan Obat di Rumah dengan Aman",
-      description:
-        "Obat yang disimpan sembarangan dapat menurunkan khasiatnya atau bahkan menjadi berbahaya. Simpan obat di tempat yang kering, sejuk, dan jauh dari jangkauan anak-anak.",
-      excerpt:
-        "Tips praktis menyimpan obat-obatan di rumah untuk menjaga kualitas dan keamanannya...",
-      image: articleImage,
-      category: "Kesehatan",
-      author: "Apt. Budi Farmasi",
-      date: "12 Agustus 2024",
-      readTime: "4 menit",
-      slug: "cara-menyimpan-obat-aman",
-    },
-    {
-      id: 3,
-      title: "Mengenal Logo Halal dan Izin Edar pada Produk",
-      description:
-        "Logo halal dan izin edar dari BPOM memberikan jaminan keamanan bagi konsumen. Artikel ini mengulas perbedaan keduanya, serta tips memeriksa keaslian label tersebut.",
-      excerpt:
-        "Panduan lengkap mengenali logo halal dan izin edar untuk memastikan produk yang aman dikonsumsi...",
-      image: articleImage,
-      category: "Regulasi",
-      author: "Tim BPOM Padang",
-      date: "10 Agustus 2024",
-      readTime: "6 menit",
-      slug: "logo-halal-izin-edar",
-    },
-    {
-      id: 4,
-      title: "Bahaya Pewarna Tekstil dalam Makanan",
-      description:
-        "Penggunaan pewarna tekstil dalam makanan sangat berbahaya bagi kesehatan. Artikel ini membahas jenis-jenis pewarna yang dilarang dan dampaknya bagi tubuh.",
-      excerpt:
-        "Waspada pewarna tekstil yang sering disalahgunakan dalam makanan dan dampak kesehatannya...",
-      image: articleImage,
-      category: "Keamanan Pangan",
-      author: "Dr. Lisa Toksiologi",
-      date: "8 Agustus 2024",
-      readTime: "7 menit",
-      slug: "bahaya-pewarna-tekstil-makanan",
-    },
-    {
-      id: 5,
-      title: "Suplemen Herbal: Manfaat dan Risikonya",
-      description:
-        "Suplemen herbal semakin populer, namun tidak semua aman untuk dikonsumsi. Pelajari cara memilih suplemen herbal yang tepat dan terdaftar di BPOM.",
-      excerpt:
-        "Panduan memilih suplemen herbal yang aman dan terdaftar resmi di BPOM...",
-      image: articleImage,
-      category: "Obat Tradisional",
-      author: "Prof. Dr. Herbal",
-      date: "5 Agustus 2024",
-      readTime: "8 menit",
-      slug: "suplemen-herbal-manfaat-risiko",
-    },
-    {
-      id: 6,
-      title: "Deteksi Boraks dalam Makanan di Rumah",
-      description:
-        "Boraks masih sering ditemukan dalam makanan meski sudah dilarang. Artikel ini mengajarkan cara sederhana mendeteksi boraks dalam makanan menggunakan bahan-bahan rumah tangga.",
-      excerpt:
-        "Cara mudah mendeteksi kandungan boraks dalam makanan dengan tes sederhana di rumah...",
-      image: articleImage,
-      category: "Keamanan Pangan",
-      author: "Tim Laboratorium BPOM",
-      date: "3 Agustus 2024",
-      readTime: "5 menit",
-      slug: "deteksi-boraks-makanan",
-    },
-    {
-      id: 7,
-      title: "Kosmetik Ilegal: Ciri-ciri dan Bahayanya",
-      description:
-        "Kosmetik ilegal yang mengandung bahan berbahaya masih beredar. Kenali ciri-ciri kosmetik legal dan bahaya penggunaan kosmetik ilegal bagi kulit.",
-      excerpt:
-        "Tips mengenali kosmetik legal dan bahaya yang mengancam dari kosmetik ilegal...",
-      image: articleImage,
-      category: "Kosmetik",
-      author: "dr. Maya Dermatologi",
-      date: "1 Agustus 2024",
-      readTime: "6 menit",
-      slug: "kosmetik-ilegal-bahaya",
-    },
-    {
-      id: 8,
-      title: "Pengawasan Mutu Vaksin di Indonesia",
-      description:
-        "BPOM berperan penting dalam pengawasan mutu vaksin yang beredar di Indonesia. Pelajari proses pengawasan dan jaminan kualitas vaksin.",
-      excerpt:
-        "Mengenal proses pengawasan mutu vaksin untuk memastikan keamanan dan efektivitasnya...",
-      image: articleImage,
-      category: "Vaksin",
-      author: "Tim Pengawasan BPOM",
-      date: "28 Juli 2024",
-      readTime: "9 menit",
-      slug: "pengawasan-mutu-vaksin",
-    },
-  ];
+  // Fetch artikel dari backend
+  useEffect(() => {
+    const fetchArticles = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await artikelService.getAll();
+        if (response.success) {
+          // Transform data sesuai dengan struktur model Artikel
+          const transformedArticles = response.data.map((article) => ({
+            ...article,
+            category: "Artikel", // default category
+            slug: `artikel-${article.id}`,
+            // Buat excerpt dari description (hilangkan HTML tags)
+            excerpt: article.description
+              ? article.description.replace(/<[^>]*>/g, "").substring(0, 150) +
+                "..."
+              : "Baca artikel lengkap untuk informasi lebih detail...",
+            // Format tanggal dari field tanggal atau created_at
+            date: article.tanggal
+              ? new Date(article.tanggal).toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              : article.created_at
+              ? new Date(article.created_at).toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              : new Date().toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                }),
+            // Gunakan image_url jika ada, fallback ke image atau default
+            image: article.image_url || article.image || heroBackground,
+          }));
+          setArticles(transformedArticles);
+        } else {
+          setError("Gagal memuat artikel");
+        }
+      } catch (err) {
+        console.error("Error fetching articles:", err);
+        setError("Terjadi kesalahan saat memuat artikel");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const categories = [
-    "Semua",
-    "Edukasi",
-    "Kesehatan",
-    "Regulasi",
-    "Keamanan Pangan",
-    "Obat Tradisional",
-    "Kosmetik",
-    "Vaksin",
-  ];
+    fetchArticles();
+  }, []);
+
+  const categories = ["Semua", "Artikel"]; // Simplified categories karena backend tidak memiliki kategori
 
   // Filter artikel berdasarkan pencarian dan kategori
   const filteredArticles = articles.filter((article) => {
@@ -168,22 +103,8 @@ export default function ArticlePage() {
   }, [searchTerm, selectedCategory]);
 
   const CategoryBadge = ({ category }) => {
-    const colors = {
-      Edukasi: "bg-blue-100 text-blue-800",
-      Kesehatan: "bg-green-100 text-green-800",
-      Regulasi: "bg-purple-100 text-purple-800",
-      "Keamanan Pangan": "bg-red-100 text-red-800",
-      "Obat Tradisional": "bg-yellow-100 text-yellow-800",
-      Kosmetik: "bg-pink-100 text-pink-800",
-      Vaksin: "bg-indigo-100 text-indigo-800",
-    };
-
     return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${
-          colors[category] || "bg-gray-100 text-gray-800"
-        }`}
-      >
+      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
         {category}
       </span>
     );
@@ -196,6 +117,9 @@ export default function ArticlePage() {
           src={article.image}
           alt={article.title}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.target.src = heroBackground; // fallback jika gambar error
+          }}
         />
         <div className="absolute top-4 left-4">
           <CategoryBadge category={article.category} />
@@ -208,13 +132,12 @@ export default function ArticlePage() {
             <span>{article.date}</span>
           </div>
           <div className="flex items-center gap-1">
-            <User size={14} />
-            <span>{article.author}</span>
+            <Eye size={14} />
+            <span>{article.views || 0} views</span>
           </div>
-          <span>• {article.readTime}</span>
         </div>
 
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 group-hover:text-header transition-colors line-clamp-2">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
           {article.title}
         </h3>
 
@@ -222,10 +145,13 @@ export default function ArticlePage() {
           {article.excerpt}
         </p>
 
-        <button className="flex items-center gap-2 text-header font-medium text-sm hover:gap-3 transition-all duration-200">
+        <Link
+          to={`/artikel/${article.id}`}
+          className="flex items-center gap-2 text-blue-600 font-medium text-sm hover:gap-3 transition-all duration-200"
+        >
           Baca Selengkapnya
           <ChevronRight size={16} />
-        </button>
+        </Link>
       </div>
     </div>
   );
@@ -237,7 +163,10 @@ export default function ArticlePage() {
           <img
             src={article.image}
             alt={article.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 min-h-48"
+            onError={(e) => {
+              e.target.src = heroBackground; // fallback jika gambar error
+            }}
           />
           <div className="absolute top-4 left-4">
             <CategoryBadge category={article.category} />
@@ -250,21 +179,18 @@ export default function ArticlePage() {
               <span>{article.date}</span>
             </div>
             <div className="flex items-center gap-1">
-              <User size={14} />
-              <span>{article.author}</span>
+              <Eye size={14} />
+              <span>{article.views || 0} views</span>
             </div>
-            <span>• {article.readTime}</span>
           </div>
 
-          <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-header transition-colors">
+          <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
             {article.title}
           </h3>
 
-          <p className="text-gray-600 mb-4 line-clamp-2">
-            {article.description}
-          </p>
+          <p className="text-gray-600 mb-4 line-clamp-2">{article.excerpt}</p>
 
-          <button className="flex items-center gap-2 text-header font-medium hover:gap-3 transition-all duration-200">
+          <button className="flex items-center gap-2 text-blue-600 font-medium hover:gap-3 transition-all duration-200">
             Baca Selengkapnya
             <ChevronRight size={16} />
           </button>
@@ -280,7 +206,7 @@ export default function ArticlePage() {
         className="relative h-96 flex items-center justify-center bg-cover bg-center"
         style={{ backgroundImage: `url(${heroBackground})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-header/90 to-blue-800/90"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-blue-800/90"></div>
         <div className="relative z-10 text-center text-white px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Artikel BPOM</h1>
           <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-90">
@@ -306,7 +232,7 @@ export default function ArticlePage() {
                 placeholder="Cari artikel..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-header focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -319,7 +245,7 @@ export default function ArticlePage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 rounded-lg pl-10 pr-10 py-3 focus:ring-2 focus:ring-header focus:border-transparent min-w-48"
+                className="appearance-none bg-white border border-gray-300 rounded-lg pl-10 pr-10 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-48"
               >
                 {categories.map((category) => (
                   <option key={category} value={category}>
@@ -335,7 +261,7 @@ export default function ArticlePage() {
                 onClick={() => setViewMode("grid")}
                 className={`p-3 ${
                   viewMode === "grid"
-                    ? "bg-header text-white"
+                    ? "bg-blue-600 text-white"
                     : "bg-white text-gray-600 hover:bg-gray-50"
                 } transition-colors`}
               >
@@ -345,7 +271,7 @@ export default function ArticlePage() {
                 onClick={() => setViewMode("list")}
                 className={`p-3 ${
                   viewMode === "list"
-                    ? "bg-header text-white"
+                    ? "bg-blue-600 text-white"
                     : "bg-white text-gray-600 hover:bg-gray-50"
                 } transition-colors`}
               >
@@ -366,78 +292,117 @@ export default function ArticlePage() {
           </div>
         </div>
 
-        {/* Articles Grid/List */}
-        {currentArticles.length > 0 ? (
-          <>
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
-                  : "space-y-6 mb-12"
-              }
-            >
-              {currentArticles.map((article) =>
-                viewMode === "grid" ? (
-                  <ArticleCard key={article.id} article={article} />
-                ) : (
-                  <ArticleListItem key={article.id} article={article} />
-                )
-              )}
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center">
+              <Loader2
+                className="animate-spin text-blue-600 mx-auto mb-4"
+                size={48}
+              />
+              <p className="text-gray-600">Memuat artikel...</p>
             </div>
+          </div>
+        )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center">
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i + 1}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                        currentPage === i + 1
-                          ? "bg-header text-white"
-                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
+        {/* Error State */}
+        {error && (
           <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
+            <div className="text-red-500 mb-4">
               <Search size={64} className="mx-auto" />
             </div>
             <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              Tidak ada artikel ditemukan
+              Terjadi Kesalahan
             </h3>
-            <p className="text-gray-500">
-              Coba ubah kata kunci pencarian atau pilih kategori yang berbeda
-            </p>
+            <p className="text-gray-500 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Muat Ulang
+            </button>
           </div>
+        )}
+
+        {/* Articles Grid/List */}
+        {!loading && !error && (
+          <>
+            {currentArticles.length > 0 ? (
+              <>
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+                      : "space-y-6 mb-12"
+                  }
+                >
+                  {currentArticles.map((article) =>
+                    viewMode === "grid" ? (
+                      <ArticleCard key={article.id} article={article} />
+                    ) : (
+                      <ArticleListItem key={article.id} article={article} />
+                    )
+                  )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+
+                      {[...Array(totalPages)].map((_, i) => (
+                        <button
+                          key={i + 1}
+                          onClick={() => setCurrentPage(i + 1)}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                            currentPage === i + 1
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          )
+                        }
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  <Search size={64} className="mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  Tidak ada artikel ditemukan
+                </h3>
+                <p className="text-gray-500">
+                  Coba ubah kata kunci pencarian atau pilih kategori yang
+                  berbeda
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

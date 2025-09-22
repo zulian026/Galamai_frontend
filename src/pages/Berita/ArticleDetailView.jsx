@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { beritaEventService } from "../../services/beritaEventService";
+import { artikelService } from "../../services/artikelService";
 import heroBg from "../../assets/images/hero-bg.png";
 import {
   ArrowLeft,
@@ -15,8 +15,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function NewsDetailPage() {
-  const { id, type } = useParams();
+export default function ArticleDetailPage() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [article, setArticle] = useState(null);
   const [relatedArticles, setRelatedArticles] = useState([]);
@@ -61,7 +61,7 @@ export default function NewsDetailPage() {
   useEffect(() => {
     const fetchArticle = async () => {
       if (!id) {
-        setError("ID berita tidak ditemukan");
+        setError("ID artikel tidak ditemukan");
         setIsLoading(false);
         return;
       }
@@ -69,15 +69,15 @@ export default function NewsDetailPage() {
         setIsLoading(true);
         setError(null);
         const token = getAuthToken();
-        const response = await beritaEventService.getById(id, token);
-        if (response?.data) {
+        const response = await artikelService.getById(id, token);
+        if (response?.success && response?.data) {
           setArticle(response.data);
         } else {
-          setError("Berita tidak ditemukan");
+          setError("Artikel tidak ditemukan");
         }
       } catch (err) {
-        console.error("Error fetching berita:", err);
-        setError("Gagal memuat berita. Silakan coba lagi.");
+        console.error("Error fetching artikel:", err);
+        setError("Gagal memuat artikel. Silakan coba lagi.");
       } finally {
         setIsLoading(false);
       }
@@ -89,24 +89,21 @@ export default function NewsDetailPage() {
     const fetchRelatedArticles = async () => {
       try {
         const token = getAuthToken();
-        const response = await beritaEventService.getAll(token);
-        if (response?.data && Array.isArray(response.data)) {
+        const response = await artikelService.getAll(token);
+        if (response?.success && Array.isArray(response.data)) {
           const related = response.data
-            .filter(
-              (item) =>
-                item.type === type && item.id.toString() !== id.toString()
-            )
+            .filter((item) => item.id.toString() !== id.toString())
             .slice(0, 3);
           setRelatedArticles(related);
         }
       } catch (err) {
-        console.error("Error fetching related berita:", err);
+        console.error("Error fetching related artikel:", err);
       }
     };
     if (article) {
       fetchRelatedArticles();
     }
-  }, [article, id, type]);
+  }, [article, id]);
 
   const handleShare = async () => {
     const shareData = {
@@ -153,7 +150,7 @@ export default function NewsDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
-        <p className="text-gray-700 font-medium">Memuat berita...</p>
+        <p className="text-gray-700 font-medium">Memuat artikel...</p>
       </div>
     );
   }
@@ -163,13 +160,13 @@ export default function NewsDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center bg-white p-8 rounded-2xl shadow-lg">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Berita tidak ditemukan
+            Artikel tidak ditemukan
           </h2>
           <button
-            onClick={() => navigate("/berita/berita-event")}
+            onClick={() => navigate("/artikel")}
             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
-            Kembali ke Berita
+            Kembali ke Artikel
           </button>
         </div>
       </div>
@@ -188,7 +185,7 @@ export default function NewsDetailPage() {
 
           {/* Back Button */}
           <button
-            onClick={() => navigate("/berita/berita-event")}
+            onClick={() => navigate("/artikel")}
             className="absolute top-6 left-6 z-20 flex items-center space-x-2 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full hover:bg-white/20 transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -197,15 +194,9 @@ export default function NewsDetailPage() {
 
           <div className="relative z-10 text-center text-white px-6 max-w-6xl mx-auto">
             <div className="mb-6">
-              <span
-                className={`inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold backdrop-blur-sm ${
-                  article.type === "berita"
-                    ? "bg-blue-600/30 text-blue-100 border border-blue-400/50"
-                    : "bg-green-600/30 text-green-100 border border-green-400/50"
-                }`}
-              >
+              <span className="inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold backdrop-blur-sm bg-green-600/30 text-green-100 border border-green-400/50">
                 <Tag className="w-4 h-4 mr-2" />
-                {article.type === "berita" ? "Berita" : "Event"}
+                Artikel
               </span>
             </div>
 
@@ -216,11 +207,11 @@ export default function NewsDetailPage() {
             <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-white/90 bg-white/10 backdrop-blur-sm rounded-2xl p-4 max-w-4xl mx-auto">
               <div className="flex items-center">
                 <Calendar className="w-5 h-5 mr-2" />
-                {formatDate(article.created_at)}
+                {formatDate(article.tanggal || article.created_at)}
               </div>
               <div className="flex items-center">
                 <User className="w-5 h-5 mr-2" />
-                Tim BPOM Padang
+                {article.author || "Tim BPOM Padang"}
               </div>
               <div className="flex items-center">
                 <Clock className="w-5 h-5 mr-2" />
@@ -243,9 +234,7 @@ export default function NewsDetailPage() {
           <nav className="flex items-center text-sm text-gray-600">
             <span className="hover:text-blue-600 cursor-pointer">Beranda</span>
             <ChevronRight className="w-4 h-4 mx-2" />
-            <span className="hover:text-blue-600 cursor-pointer">
-              Berita & Event
-            </span>
+            <span className="hover:text-blue-600 cursor-pointer">Artikel</span>
             <ChevronRight className="w-4 h-4 mx-2" />
             <span className="text-gray-800 font-medium truncate max-w-md">
               {article.title}
@@ -288,7 +277,8 @@ export default function NewsDetailPage() {
             <div
               dangerouslySetInnerHTML={{
                 __html:
-                  article.description || "<p>Konten berita tidak tersedia.</p>",
+                  article.description ||
+                  "<p>Konten artikel tidak tersedia.</p>",
               }}
             />
           </div>
@@ -299,7 +289,7 @@ export default function NewsDetailPage() {
           <div className="bg-white rounded-2xl p-8 md:p-12 shadow-xl border border-gray-100">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl md:text-3xl font-bold text-gray-800">
-                Berita Terkait
+                Artikel Terkait
               </h3>
               <ExternalLink className="w-6 h-6 text-gray-400" />
             </div>
@@ -308,7 +298,7 @@ export default function NewsDetailPage() {
               {relatedArticles.map((related) => (
                 <a
                   key={related.id}
-                  href={`/berita/${related.type}/${related.id}`}
+                  href={`/artikel/${related.id}`}
                   className="group block"
                 >
                   <article className="bg-gray-50 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
@@ -322,21 +312,15 @@ export default function NewsDetailPage() {
                         }}
                       />
                       <div className="absolute top-3 left-3">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                            related.type === "berita"
-                              ? "bg-blue-600"
-                              : "bg-green-600"
-                          }`}
-                        >
-                          {related.type === "berita" ? "Berita" : "Event"}
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold text-white bg-green-600">
+                          Artikel
                         </span>
                       </div>
                     </div>
 
                     <div className="p-6">
                       <p className="text-xs text-gray-500 mb-2">
-                        {formatDate(related.created_at)}
+                        {formatDate(related.tanggal || related.created_at)}
                       </p>
                       <h4 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 mb-3">
                         {related.title}
