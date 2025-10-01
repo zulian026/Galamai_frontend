@@ -153,11 +153,6 @@ export default function DashboardLayout() {
           icon: <Users className="w-5 h-5" />,
           path: "/dashboard/users",
         },
-        {
-          name: "Profil Bpom",
-          icon: <Settings className="w-5 h-5" />,
-          path: "/dashboard/profil",
-        },
       ],
     },
   ];

@@ -9,7 +9,6 @@ const handleFormDataRequest = async (
 
   Object.entries(data).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
-      // Kalau File tetap file, kalau string/number diubah ke string
       formData.append(key, value instanceof File ? value : value.toString());
     }
   });
@@ -19,7 +18,6 @@ const handleFormDataRequest = async (
     method,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      // Jangan set Content-Type, biarkan axios otomatis
     },
     data: formData,
   });
@@ -27,24 +25,24 @@ const handleFormDataRequest = async (
   return res.data;
 };
 
-// 🔹 Transform data dari backend ke format yang diharapkan frontend
+// 🔹 Transform data dari backend ke format frontend
 const transformData = (item) => {
   return {
-    id: item.id_berita, // Backend: id_berita -> Frontend: id
-    title: item.judul, // Backend: judul -> Frontend: title
-    description: item.isi, // Backend: isi -> Frontend: description
-    image: item.gambar, // Backend: gambar -> Frontend: image
-    image_url: item.image_url, // URL lengkap dari backend
-    type: item.tipe, // Backend: tipe -> Frontend: type
-    created_at: item.tanggal || item.created_at, // Backend: tanggal -> Frontend: created_at
+    id: item.id_berita, // Backend: id_berita → Frontend: id
+    title: item.judul,
+    description: item.isi,
+    image: item.gambar,
+    image_url: item.image_url,
+    type: item.tipe,
+    created_at: item.tanggal || item.created_at,
     views: item.views,
-    // Keep original fields juga untuk backward compatibility
+    status: item.status, // ✅ status (draft / publish)
     ...item,
   };
 };
 
 export const beritaEventService = {
-  // 🔹 Ambil semua data (tanpa pagination)
+  // 🔹 Ambil semua berita tanpa pagination
   getAll: async (token) => {
     try {
       const response = await axios.get(
@@ -65,41 +63,81 @@ export const beritaEventService = {
     }
   },
 
-  // 🔹 Ambil data dengan pagination
-  // 🔹 Ambil data dengan pagination + filter
-  getPaginated: async (
-    { page = 1, perPage = 10, type, search, sort } = {},
-    token
-  ) => {
+  // 🔹 Ambil berita dengan pagination
+  getPaginated: async ({ page = 1, perPage = 10, type, search, sort } = {}, token) => {
     try {
-      const params = new URLSearchParams();
+      let url = `${import.meta.env.VITE_API_URL}/api/berita?page=${page}&per_page=${perPage}`;
+      
+      // ✅ Tambahkan filter type jika ada
+      if (type) {
+        url += `&type=${type}`;
+      }
+      
+      // ✅ Tambahkan search jika ada
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+      
+      // ✅ Tambahkan sort jika ada
+      if (sort) {
+        url += `&sort=${sort}`;
+      }
 
-      params.append("page", page);
-      params.append("per_page", perPage);
-
-      if (type) params.append("type", type);
-      if (search) params.append("search", search);
-      if (sort) params.append("sort", sort);
-
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/berita?${params.toString()}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }
-      );
+      const response = await axios.get(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
       if (response.data?.data) {
         response.data.data = response.data.data.map(transformData);
       }
 
-      return response.data; // ✅ { success, data, meta }
+      return response.data;
     } catch (error) {
       console.error("Error in getPaginated:", error);
       throw error;
     }
   },
 
-  // 🔹 Get by ID
+  // 🔹 ✅ UPDATED: Ambil berita berdasarkan status (draft / publish) dengan support untuk type, search, sort
+  getByStatus: async (
+    status = "publish",
+    { page = 1, perPage = 10, type, search, sort } = {},
+    token
+  ) => {
+    try {
+      let url = `${import.meta.env.VITE_API_URL}/api/berita?status=${status}&page=${page}&per_page=${perPage}`;
+      
+      // ✅ Tambahkan filter type jika ada
+      if (type) {
+        url += `&type=${type}`;
+      }
+      
+      // ✅ Tambahkan search jika ada
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+      
+      // ✅ Tambahkan sort jika ada
+      if (sort) {
+        url += `&sort=${sort}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (response.data?.data) {
+        response.data.data = response.data.data.map(transformData);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Error in getByStatus:", error);
+      throw error;
+    }
+  },
+
+  // 🔹 Ambil berita by ID
   getById: async (id, token) => {
     try {
       const response = await axios.get(
@@ -120,8 +158,8 @@ export const beritaEventService = {
     }
   },
 
+  // 🔹 Tambah berita baru (default draft)
   add: async (data, token) => {
-    // Transform data ke format backend
     const backendData = {
       judul: data.title || data.judul,
       isi: data.description || data.isi,
@@ -131,6 +169,7 @@ export const beritaEventService = {
         data.created_at ||
         data.tanggal ||
         new Date().toISOString().split("T")[0],
+      status: data.status || "draft", // ✅ default draft
     };
 
     const response = await handleFormDataRequest("/api/berita", {
@@ -139,7 +178,6 @@ export const beritaEventService = {
       data: backendData,
     });
 
-    // Transform response data
     if (response?.data) {
       response.data = transformData(response.data);
     }
@@ -147,15 +185,19 @@ export const beritaEventService = {
     return response;
   },
 
+  // 🔹 Update berita
   update: async (id, data, token) => {
-    // Transform data ke format backend
     const backendData = {
       judul: data.title || data.judul,
       isi: data.description || data.isi,
-      gambar: data.image || data.gambar,
       tipe: data.type || data.tipe,
       tanggal: data.created_at || data.tanggal,
+      status: data.status, // ✅ ikut update status
     };
+
+    if (data.image && data.image instanceof File) {
+      backendData.gambar = data.image;
+    }
 
     const response = await handleFormDataRequest(
       `/api/berita/${id}?_method=PUT`,
@@ -166,7 +208,6 @@ export const beritaEventService = {
       }
     );
 
-    // Transform response data
     if (response?.data) {
       response.data = transformData(response.data);
     }
@@ -174,6 +215,7 @@ export const beritaEventService = {
     return response;
   },
 
+  // 🔹 Hapus berita
   delete: async (id, token) => {
     try {
       const response = await axios.delete(
@@ -189,7 +231,7 @@ export const beritaEventService = {
     }
   },
 
-  // 🔹 Upload image method
+  // 🔹 Upload image khusus berita
   uploadImage: async (file, token) => {
     try {
       const formData = new FormData();
@@ -209,6 +251,28 @@ export const beritaEventService = {
       return response.data;
     } catch (error) {
       console.error("Error in uploadImage:", error);
+      throw error;
+    }
+  },
+
+  // 🔹 Publish berita
+  publish: async (id, token) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/berita/${id}/publish`,
+        {},
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      if (response.data?.data) {
+        response.data.data = transformData(response.data.data);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Error in publish:", error);
       throw error;
     }
   },

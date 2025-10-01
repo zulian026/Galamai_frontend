@@ -54,13 +54,13 @@ export default function NewsPage() {
       id: "berita",
       label: "Berita Terkini",
       icon: Newspaper,
-      count: beritaCount, // ✅ Use specific counter
+      count: beritaCount,
     },
     {
       id: "event",
       label: "Event & Kegiatan",
       icon: Calendar,
-      count: eventCount, // ✅ Use specific counter
+      count: eventCount,
     },
   ];
 
@@ -74,24 +74,29 @@ export default function NewsPage() {
   const swiperRef = useRef(null);
   const latestGridRef = useRef(null);
 
-  // ✅ FIXED: Fetch counts for both tabs
+  // ✅ NEW: Filter hanya berita yang published
+  const filterPublishedOnly = (data) => {
+    return data.filter((item) => item.status === "publish");
+  };
+
+  // ✅ UPDATED: Fetch counts untuk published items only
   const fetchTabCounts = async () => {
     try {
-      // Fetch berita count
-      const beritaResponse = await beritaEventService.getPaginated({
+      // Fetch berita count (published only)
+      const beritaResponse = await beritaEventService.getByStatus("publish", {
         page: 1,
         perPage: 1,
-        type: 'berita',
+        type: "berita",
       });
       if (beritaResponse?.meta) {
         setBeritaCount(beritaResponse.meta.total || 0);
       }
 
-      // Fetch event count
-      const eventResponse = await beritaEventService.getPaginated({
+      // Fetch event count (published only)
+      const eventResponse = await beritaEventService.getByStatus("publish", {
         page: 1,
         perPage: 1,
-        type: 'event',
+        type: "event",
       });
       if (eventResponse?.meta) {
         setEventCount(eventResponse.meta.total || 0);
@@ -101,12 +106,13 @@ export default function NewsPage() {
     }
   };
 
-  // Fetch data untuk slider (3 item terbaru tanpa pagination)
+  // ✅ UPDATED: Fetch data untuk slider (published only)
   const fetchSliderData = async () => {
     try {
-      const response = await beritaEventService.getAll();
+      const response = await beritaEventService.getByStatus("publish");
       if (response?.data) {
-        const sortedData = response.data.sort(
+        const publishedData = filterPublishedOnly(response.data);
+        const sortedData = publishedData.sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
         setAllData(sortedData);
@@ -116,7 +122,7 @@ export default function NewsPage() {
     }
   };
 
-  // ✅ FIXED: Fetch paginated data untuk publik
+  // ✅ UPDATED: Fetch paginated data (published only)
   const fetchPaginatedData = async (
     page = 1,
     type = activeTab,
@@ -124,7 +130,8 @@ export default function NewsPage() {
   ) => {
     setLoading(true);
     try {
-      const response = await beritaEventService.getPaginated({
+      // ✅ Gunakan getByStatus dengan status 'publish'
+      const response = await beritaEventService.getByStatus("publish", {
         page,
         perPage,
         type,
@@ -133,19 +140,19 @@ export default function NewsPage() {
       });
 
       if (response.data) {
-        const newData = response.data;
-        setCurrentData(reset ? newData : newData);
+        const publishedData = filterPublishedOnly(response.data);
+        setCurrentData(reset ? publishedData : publishedData);
       }
 
       if (response.meta) {
         setTotalPages(response.meta.last_page || 1);
         setTotalItems(response.meta.total || 0);
         setCurrentPage(page);
-        
+
         // ✅ Update specific tab counter
-        if (type === 'berita') {
+        if (type === "berita") {
           setBeritaCount(response.meta.total || 0);
-        } else if (type === 'event') {
+        } else if (type === "event") {
           setEventCount(response.meta.total || 0);
         }
       }
@@ -164,7 +171,7 @@ export default function NewsPage() {
       setLoading(true);
       await Promise.all([
         fetchSliderData(),
-        fetchTabCounts(), // ✅ Fetch counts for both tabs
+        fetchTabCounts(),
         fetchPaginatedData(1, activeTab, true),
       ]);
     };
@@ -244,7 +251,7 @@ export default function NewsPage() {
     return heroBg;
   };
 
-  // Get slider data (3 terbaru dari semua data)
+  // ✅ UPDATED: Get slider data (published only)
   const getSliderData = () => {
     const currentSliderData = allData.filter((item) =>
       activeTab === "berita"
@@ -252,12 +259,14 @@ export default function NewsPage() {
         : item.type === "event" || item.category === "event"
     );
 
-    return currentSliderData.slice(0, 3);
+    // ✅ Double check - filter published only
+    const publishedOnly = filterPublishedOnly(currentSliderData);
+    return publishedOnly.slice(0, 3);
   };
 
   const sliderItems = getSliderData();
 
-  // Pagination handlers - DIPERBAIKI
+  // Pagination handlers
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       fetchPaginatedData(page, activeTab, true);
@@ -344,7 +353,7 @@ export default function NewsPage() {
           className="relative h-96 flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroBg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-header/90 to-blue-800/90"></div>
+          <div className="absolute inset-0 bg-header/95"></div>
           <div className="relative z-10 text-center text-white px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Berita dan Event
@@ -428,7 +437,7 @@ export default function NewsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center space-x-3 px-8 py-4 rounded-2xl font-semibold transition-all transform hover:-translate-y-1 ${
                     activeTab === tab.id
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl"
+                      ? "bg-gradient-to-r bg-header text-white shadow-xl"
                       : "bg-white text-gray-700 hover:bg-gray-50 shadow-md border border-gray-200"
                   }`}
                 >
@@ -466,7 +475,7 @@ export default function NewsPage() {
                   ? `Tidak ditemukan hasil untuk "${searchTerm}"`
                   : `Belum ada ${
                       activeTab === "berita" ? "berita" : "event"
-                    } tersedia`}
+                    } yang dipublikasikan`}
               </p>
               {searchTerm && (
                 <button

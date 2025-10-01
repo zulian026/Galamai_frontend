@@ -3,7 +3,7 @@ import galamai from "../../assets/images/galamai1.png";
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [currentFaq, setCurrentFaq] = useState(0);
+  const [hoveredBar, setHoveredBar] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -14,49 +14,56 @@ const HeroSection = () => {
 
   // Data untuk bar chart dengan 9 layanan
   const chartData = [
-    { label: "Layanan Online", value: 85, color: "bg-green-400" },
-    { label: "Antrian Digital", value: 92, color: "bg-blue-400" },
-    { label: "Info Real-time", value: 78, color: "bg-yellow-400" },
-    { label: "Pengaduan", value: 88, color: "bg-purple-400" },
-    { label: "Kepuasan User", value: 95, color: "bg-pink-400" },
-    { label: "SMS Gateway", value: 82, color: "bg-indigo-400" },
-    { label: "Registrasi", value: 90, color: "bg-red-400" },
-    { label: "Konsultasi", value: 87, color: "bg-orange-400" },
-    { label: "Monitoring", value: 93, color: "bg-teal-400" },
+    {
+      label: "Layanan Online",
+      value:  20,
+      color: "bg-green-400",
+      date: "20/09/2025",
+    },
+    {
+      label: "Antrian Digital",
+      value: 92,
+      color: "bg-blue-400",
+      date: "19/09/2025",
+    },
+    {
+      label: "Info Real-time",
+      value: 78,
+      color: "bg-yellow-400",
+      date: "18/09/2025",
+    },
+    {
+      label: "Pengaduan",
+      value: 88,
+      color: "bg-purple-400",
+      date: "20/09/2025",
+    },
+    {
+      label: "Kepuasan User",
+      value: 95,
+      color: "bg-pink-400",
+      date: "21/09/2025",
+    },
+    {
+      label: "SMS Gateway",
+      value: 82,
+      color: "bg-indigo-400",
+      date: "19/09/2025",
+    },
+    { label: "Registrasi", value: 90, color: "bg-red-400", date: "20/09/2025" },
+    {
+      label: "Konsultasi",
+      value: 87,
+      color: "bg-orange-400",
+      date: "21/09/2025",
+    },
+    {
+      label: "Monitoring",
+      value: 93,
+      color: "bg-teal-400",
+      date: "20/09/2025",
+    },
   ];
-
-  // Data FAQ
-  const faqData = [
-    {
-      question: "Apa itu GALAMAI?",
-      answer:
-        "GALAMAI adalah aplikasi terpadu BBPOM Padang untuk layanan publik berbasis web dan SMS yang memudahkan akses informasi obat dan makanan.",
-    },
-    {
-      question: "Bagaimana cara menggunakan layanan?",
-      answer:
-        "Anda dapat mengakses layanan melalui website atau mengirim SMS dengan format tertentu. Semua layanan tersedia 24/7 untuk kemudahan Anda.",
-    },
-    {
-      question: "Apakah layanan ini gratis?",
-      answer:
-        "Ya, semua layanan GALAMAI dapat diakses secara gratis. Kami berkomitmen memberikan pelayanan terbaik untuk masyarakat.",
-    },
-    {
-      question: "Berapa lama response time?",
-      answer:
-        "Sistem kami memberikan respons dalam waktu kurang dari 2 detik untuk memastikan pengalaman pengguna yang optimal.",
-    },
-  ];
-
-  // Auto-rotate FAQ
-  useEffect(() => {
-    const faqInterval = setInterval(() => {
-      setCurrentFaq((prev) => (prev + 1) % faqData.length);
-    }, 4000); // Ganti tiap 4 detik
-
-    return () => clearInterval(faqInterval);
-  }, [faqData.length]);
 
   // Add floating animation keyframes
   const floatingStyle = `
@@ -236,8 +243,186 @@ const HeroSection = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-header/50 to-header/80"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-header/60 via-transparent to-transparent"></div>
 
-      {/* Grid konten utama */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 lg:gap-12 items-center max-w-7xl w-full relative z-10">
+      {/* Mobile Layout: Flexbox Column */}
+      <div className="flex flex-col items-center max-w-7xl w-full relative z-10 md:hidden">
+        {/* Left Content - Di atas untuk mobile */}
+        <div
+          className={`space-y-4 sm:space-y-6 text-center mb-8
+            transform transition-all duration-700 ease-out
+            ${
+              isVisible
+                ? "translate-x-0 opacity-100"
+                : "-translate-x-full opacity-0"
+            }
+          `}
+        >
+          <h1 className="text-2xl sm:text-3xl font-bold leading-tight text-white">
+            <span className="text-green-400">Galamai</span> – Galeri Layanan
+            Masyarakat dan Informasi
+          </h1>
+          <p className="text-gray-200 text-sm sm:text-base max-w-xl mx-auto">
+            Aplikasi terpadu berbasis Web dan SMS dari BBPOM Padang untuk
+            memudahkan layanan dan memberikan informasi obat, makanan, serta
+            layanan publik kapan saja dan di mana saja.
+          </p>
+
+          <div className="flex flex-col gap-3 items-center">
+            <button className="w-full sm:w-auto bg-green-400 hover:bg-green-500 text-white px-6 py-3 rounded-full font-semibold shadow-md transition-all duration-200">
+              Lihat Layanan
+            </button>
+            <button className="w-full sm:w-auto px-6 py-3 rounded-full font-semibold border border-green-400 text-green-400 hover:bg-green-400 hover:text-[#003366] transition-all duration-200">
+              Pelajari lebih lanjut
+            </button>
+          </div>
+        </div>
+
+        {/* Chart Content - Di bawah untuk mobile */}
+        <div
+          className={`relative flex justify-center w-full
+            transform transition-all duration-700 ease-out delay-300
+            ${
+              isVisible
+                ? "translate-x-0 opacity-100"
+                : "translate-x-full opacity-0"
+            }
+          `}
+        >
+          <div className="backdrop-blur-xl rounded-3xl pb-10 p-6 w-full max-w-md relative overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-3xl -translate-y-16 translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/20 to-pink-400/20 rounded-full blur-2xl translate-y-8 -translate-x-8"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                      className="size-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <h3 className="text-white text-lg font-bold text-center">
+                  Performa Layanan GALAMAI
+                </h3>
+              </div>
+
+              {/* Chart Container - Mobile optimized */}
+              <div className="relative h-48 mb-6">
+                <div className="absolute bottom-0 w-full flex items-end justify-center gap-0.5">
+                  {chartData.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col items-center group flex-1 min-w-0 relative"
+                      onMouseEnter={() => setHoveredBar(index)}
+                      onMouseLeave={() => setHoveredBar(null)}
+                    >
+                      {/* Hover Tooltip */}
+                      {hoveredBar === index && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 z-20 transition-all duration-300 mb-2">
+                          <div className="bg-gray-900/95 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-xl border border-gray-700/50 min-w-max">
+                            <div className="text-center">
+                              <div className="font-bold text-base text-green-400">
+                                {item.value}%
+                              </div>
+                              <div className="text-xs text-gray-200 font-medium">
+                                {item.label}
+                              </div>
+                              <div className="text-xs text-gray-400 mt-1">
+                                {item.date}
+                              </div>
+                            </div>
+                            {/* Arrow pointing down */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+                              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/95"></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Batang chart - Mobile optimized */}
+                      <div
+                        className={`w-full max-w-[24px] ${
+                          item.color
+                        } rounded-t-lg shadow-md relative overflow-hidden
+                          transform transition-all duration-500 ease-out cursor-pointer
+                          ${
+                            hoveredBar === index
+                              ? "scale-110 shadow-xl brightness-110"
+                              : "hover:scale-105 hover:shadow-lg"
+                          }
+                          ${
+                            isVisible
+                              ? "translate-y-0 opacity-100"
+                              : "translate-y-8 opacity-0"
+                          }
+                        `}
+                        style={{
+                          height: isVisible
+                            ? `${(item.value / 100) * 160}px`
+                            : "0px",
+                          transitionDelay: `${400 + index * 100}ms`,
+                        }}
+                      >
+                        {/* Shine effect on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                        {/* Glowing effect when hovered */}
+                        {hoveredBar === index && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent rounded-t-lg"></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Labels positioned below the bars - Mobile optimized */}
+                <div className="absolute -bottom-12 w-full flex justify-center gap-0.5">
+                  {chartData.map((item, index) => (
+                    <div key={index} className="flex-1 min-w-0">
+                      <div
+                        className={`text-white text-[9px] text-center font-medium px-0.5
+                          transition-all duration-500
+                          ${
+                            isVisible
+                              ? "translate-y-0 opacity-100"
+                              : "translate-y-4 opacity-0"
+                          }
+                          ${
+                            hoveredBar === index
+                              ? "text-green-400 font-semibold"
+                              : ""
+                          }
+                        `}
+                        style={{
+                          transitionDelay: `${500 + index * 100}ms`,
+                          wordBreak: "break-word",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout: Grid (md and above) */}
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 lg:gap-12 items-center max-w-7xl w-full relative z-10">
         {/* Left Content */}
         <div
           className={`space-y-4 sm:space-y-6 text-center md:text-left order-2 md:order-1
@@ -249,15 +434,6 @@ const HeroSection = () => {
             }
           `}
         >
-          {/* Logo Galamai */}
-          {/* <div className="flex justify-center md:justify-start mb-4">
-            <img
-              src={galamai}
-              alt="Logo Galamai"
-              className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl shadow-lg"
-            />
-          </div> */}
-
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight text-white">
             <span className="text-green-400">Galamai</span> – Galeri Layanan
             Masyarakat dan Informasi
@@ -289,7 +465,7 @@ const HeroSection = () => {
             }
           `}
         >
-          <div className="backdrop-blur-xl rounded-3xl p-6 w-full max-w-2xl relative overflow-hidden">
+          <div className="backdrop-blur-xl rounded-3xl pb-10 p-6 w-full max-w-2xl relative overflow-hidden">
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-3xl -translate-y-16 translate-x-16"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/20 to-pink-400/20 rounded-full blur-2xl translate-y-8 -translate-x-8"></div>
@@ -319,309 +495,106 @@ const HeroSection = () => {
                 </h3>
               </div>
 
-              <div className="flex items-end justify-center h-64 gap-1 mb-6">
-                {chartData.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center group flex-1 min-w-0 relative"
-                  >
-                    {/* Base shadow gradient - muncul dari bayangan */}
+              {/* Chart Container - Desktop */}
+              <div className="relative h-64 mb-6">
+                <div className="absolute bottom-0 w-full flex items-end justify-center gap-1">
+                  {chartData.map((item, index) => (
                     <div
-                      className={`absolute bottom-0 w-full max-w-[32px] sm:max-w-[36px] md:max-w-[40px] lg:max-w-[44px] xl:max-w-[48px]
-                        transform transition-all duration-1200 ease-out
-                        ${
-                          isVisible
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-12 opacity-0"
-                        }
-                      `}
-                      style={{
-                        height: isVisible
-                          ? `${(item.value / 100) * 220}px`
-                          : "0px",
-                        transitionDelay: `${600 + index * 150}ms`,
-                        background: `linear-gradient(to top, ${
-                          item.color === "bg-green-400"
-                            ? "rgba(74, 222, 128, 0.4), rgba(74, 222, 128, 0.1), transparent"
-                            : item.color === "bg-blue-400"
-                            ? "rgba(96, 165, 250, 0.4), rgba(96, 165, 250, 0.1), transparent"
-                            : item.color === "bg-yellow-400"
-                            ? "rgba(250, 204, 21, 0.4), rgba(250, 204, 21, 0.1), transparent"
-                            : item.color === "bg-purple-400"
-                            ? "rgba(192, 132, 252, 0.4), rgba(192, 132, 252, 0.1), transparent"
-                            : item.color === "bg-pink-400"
-                            ? "rgba(244, 114, 182, 0.4), rgba(244, 114, 182, 0.1), transparent"
-                            : item.color === "bg-indigo-400"
-                            ? "rgba(129, 140, 248, 0.4), rgba(129, 140, 248, 0.1), transparent"
-                            : item.color === "bg-red-400"
-                            ? "rgba(248, 113, 113, 0.4), rgba(248, 113, 113, 0.1), transparent"
-                            : item.color === "bg-orange-400"
-                            ? "rgba(251, 146, 60, 0.4), rgba(251, 146, 60, 0.1), transparent"
-                            : "rgba(45, 212, 191, 0.4), rgba(45, 212, 191, 0.1), transparent"
-                        })`,
-                        filter: "blur(4px)",
-                        borderRadius: "12px 12px 0 0",
-                      }}
-                    ></div>
-
-                    {/* Reflection shadow at the bottom */}
-                    <div
-                      className={`absolute bottom-0 w-full max-w-[32px] sm:max-w-[36px] md:max-w-[40px] lg:max-w-[44px] xl:max-w-[48px]
-                        h-8 transform transition-all duration-1200 ease-out
-                        ${
-                          isVisible
-                            ? "translate-y-8 opacity-60"
-                            : "translate-y-12 opacity-0"
-                        }
-                      `}
-                      style={{
-                        transitionDelay: `${700 + index * 150}ms`,
-                        background: `radial-gradient(ellipse at center, ${
-                          item.color === "bg-green-400"
-                            ? "rgba(74, 222, 128, 0.3)"
-                            : item.color === "bg-blue-400"
-                            ? "rgba(96, 165, 250, 0.3)"
-                            : item.color === "bg-yellow-400"
-                            ? "rgba(250, 204, 21, 0.3)"
-                            : item.color === "bg-purple-400"
-                            ? "rgba(192, 132, 252, 0.3)"
-                            : item.color === "bg-pink-400"
-                            ? "rgba(244, 114, 182, 0.3)"
-                            : item.color === "bg-indigo-400"
-                            ? "rgba(129, 140, 248, 0.3)"
-                            : item.color === "bg-red-400"
-                            ? "rgba(248, 113, 113, 0.3)"
-                            : item.color === "bg-orange-400"
-                            ? "rgba(251, 146, 60, 0.3)"
-                            : "rgba(45, 212, 191, 0.3)"
-                        }, transparent)`,
-                        filter: "blur(6px)",
-                        borderRadius: "50%",
-                      }}
-                    ></div>
-
-                    <div
-                      className={`w-full max-w-[32px] sm:max-w-[36px] md:max-w-[40px] lg:max-w-[44px] xl:max-w-[48px] 
-                        rounded-t-xl shadow-xl relative overflow-hidden z-10
-                        transform transition-all duration-1200 ease-out cursor-pointer
-                        hover:scale-110 hover:shadow-2xl group-hover:z-20
-                        ${
-                          isVisible
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-12 opacity-0"
-                        }
-                      `}
-                      style={{
-                        height: isVisible
-                          ? `${(item.value / 100) * 200}px`
-                          : "0px",
-                        transitionDelay: `${800 + index * 150}ms`,
-                        background: `linear-gradient(135deg, ${
-                          item.color === "bg-green-400"
-                            ? "#4ade80, #22c55e"
-                            : item.color === "bg-blue-400"
-                            ? "#60a5fa, #3b82f6"
-                            : item.color === "bg-yellow-400"
-                            ? "#facc15, #eab308"
-                            : item.color === "bg-purple-400"
-                            ? "#c084fc, #a855f7"
-                            : item.color === "bg-pink-400"
-                            ? "#f472b6, #ec4899"
-                            : item.color === "bg-indigo-400"
-                            ? "#818cf8, #6366f1"
-                            : item.color === "bg-red-400"
-                            ? "#f87171, #ef4444"
-                            : item.color === "bg-orange-400"
-                            ? "#fb923c, #f97316"
-                            : "#2dd4bf, #14b8a6"
-                        })`,
-                        boxShadow: `0 0 20px ${
-                          item.color === "bg-green-400"
-                            ? "rgba(74, 222, 128, 0.3)"
-                            : item.color === "bg-blue-400"
-                            ? "rgba(96, 165, 250, 0.3)"
-                            : item.color === "bg-yellow-400"
-                            ? "rgba(250, 204, 21, 0.3)"
-                            : item.color === "bg-purple-400"
-                            ? "rgba(192, 132, 252, 0.3)"
-                            : item.color === "bg-pink-400"
-                            ? "rgba(244, 114, 182, 0.3)"
-                            : item.color === "bg-indigo-400"
-                            ? "rgba(129, 140, 248, 0.3)"
-                            : item.color === "bg-red-400"
-                            ? "rgba(248, 113, 113, 0.3)"
-                            : item.color === "bg-orange-400"
-                            ? "rgba(251, 146, 60, 0.3)"
-                            : "rgba(45, 212, 191, 0.3)"
-                        }`,
-                      }}
+                      key={index}
+                      className="flex flex-col items-center group flex-1 min-w-0 relative"
+                      onMouseEnter={() => setHoveredBar(index)}
+                      onMouseLeave={() => setHoveredBar(null)}
                     >
-                      {/* Animated shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                      {/* Hover Tooltip */}
+                      {hoveredBar === index && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 z-20 transition-all duration-300 mb-2">
+                          <div className="bg-gray-900/95 backdrop-blur-sm text-white px-4 py-3 rounded-lg shadow-xl border border-gray-700/50 min-w-max">
+                            <div className="text-center">
+                              <div className="font-bold text-lg text-green-400">
+                                {item.value}
+                              </div>
+                              <div className="text-sm text-gray-200 font-medium">
+                                {item.label}
+                              </div>
+                              <div className="text-xs text-gray-400 mt-1">
+                                {item.date}
+                              </div>
+                            </div>
+                            {/* Arrow pointing down */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+                              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/95"></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                      {/* Floating percentage */}
+                      {/* Batang chart - Desktop */}
                       <div
-                        className={`absolute -top-10 left-1/2 transform -translate-x-1/2
-                          text-white text-xs font-bold bg-gradient-to-r from-gray-900/80 to-gray-800/80
-                          backdrop-blur-sm rounded-lg px-2 py-1 shadow-lg border border-white/20
-                          transition-all duration-700 ease-out
+                        className={`w-full max-w-[32px] sm:max-w-[36px] md:max-w-[40px] lg:max-w-[44px] xl:max-w-[48px] 
+                          ${
+                            item.color
+                          } rounded-t-lg shadow-md relative overflow-hidden
+                          transform transition-all duration-500 ease-out cursor-pointer
+                          ${
+                            hoveredBar === index
+                              ? "scale-110 shadow-xl brightness-110"
+                              : "hover:scale-105 hover:shadow-lg"
+                          }
                           ${
                             isVisible
-                              ? "translate-y-0 opacity-100 scale-100"
-                              : "translate-y-4 opacity-0 scale-75"
+                              ? "translate-y-0 opacity-100"
+                              : "translate-y-8 opacity-0"
                           }
                         `}
-                        style={{ transitionDelay: `${1400 + index * 150}ms` }}
-                      >
-                        {item.value}%
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-gray-800 rotate-45 -mt-1"></div>
-                      </div>
-
-                      {/* Pulsing glow effect */}
-                      <div
-                        className={`absolute inset-0 rounded-t-xl blur-lg opacity-60 animate-pulse`}
                         style={{
-                          background: `linear-gradient(135deg, ${
-                            item.color === "bg-green-400"
-                              ? "#4ade80, #22c55e"
-                              : item.color === "bg-blue-400"
-                              ? "#60a5fa, #3b82f6"
-                              : item.color === "bg-yellow-400"
-                              ? "#facc15, #eab308"
-                              : item.color === "bg-purple-400"
-                              ? "#c084fc, #a855f7"
-                              : item.color === "bg-pink-400"
-                              ? "#f472b6, #ec4899"
-                              : item.color === "bg-indigo-400"
-                              ? "#818cf8, #6366f1"
-                              : item.color === "bg-red-400"
-                              ? "#f87171, #ef4444"
-                              : item.color === "bg-orange-400"
-                              ? "#fb923c, #f97316"
-                              : "#2dd4bf, #14b8a6"
-                          })`,
+                          height: isVisible
+                            ? `${(item.value / 100) * 200}px`
+                            : "0px",
+                          transitionDelay: `${400 + index * 100}ms`,
                         }}
-                      ></div>
-                    </div>
+                      >
+                        {/* Shine effect on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-                    <div
-                      className={`text-white text-[10px] sm:text-xs text-center mt-3 font-medium leading-tight
-                        transform transition-all duration-600 ease-out px-1 break-words
-                        ${
-                          isVisible
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-6 opacity-0"
-                        }
-                      `}
-                      style={{
-                        transitionDelay: `${1200 + index * 150}ms`,
-                        wordBreak: "break-word",
-                        hyphens: "auto",
-                      }}
-                    >
-                      {item.label}
+                        {/* Glowing effect when hovered */}
+                        {hoveredBar === index && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent rounded-t-lg"></div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              {/* Stats summary */}
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <div className="text-center">
-                  <div className="text-green-400 font-bold text-lg">24/7</div>
-                  <div className="text-white/80 text-xs">Available</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-blue-400 font-bold text-lg">&lt;2s</div>
-                  <div className="text-white/80 text-xs">Response</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-yellow-400 font-bold text-lg">99%</div>
-                  <div className="text-white/80 text-xs">Uptime</div>
+                {/* Labels positioned below the bars - Desktop */}
+                <div className="absolute -bottom-14 w-full flex justify-center gap-1">
+                  {chartData.map((item, index) => (
+                    <div key={index} className="flex-1 min-w-0">
+                      <div
+                        className={`text-white text-[10px] sm:text-xs text-center font-medium px-1
+                          transition-all duration-500
+                          ${
+                            isVisible
+                              ? "translate-y-0 opacity-100"
+                              : "translate-y-4 opacity-0"
+                          }
+                          ${
+                            hoveredBar === index
+                              ? "text-green-400 font-semibold"
+                              : ""
+                          }
+                        `}
+                        style={{
+                          transitionDelay: `${500 + index * 100}ms`,
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ Section di bawah grafik */}
-      <div
-        className={`w-full max-w-5xl mt-16 mb-20 px-4 transition-all duration-1000 ease-out delay-700
-          ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }
-        `}
-      >
-        <div className="relative perspective-1000">
-          <div className="relative h-80 sm:h-64 md:h-60">
-            {faqData.map((faq, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 transition-all duration-1000 ease-out transform-gpu
-                  ${
-                    index === currentFaq
-                      ? "translate-y-0 opacity-100 scale-100 rotate-0 z-20"
-                      : index === (currentFaq + 1) % faqData.length
-                      ? "translate-y-8 opacity-30 scale-95 rotate-1 z-10"
-                      : index ===
-                        (currentFaq - 1 + faqData.length) % faqData.length
-                      ? "translate-y-4 opacity-20 scale-90 -rotate-1 z-0"
-                      : "translate-y-12 opacity-0 scale-85 rotate-2 z-0"
-                  }
-                `}
-                style={{
-                  filter: index === currentFaq ? "blur(0px)" : "blur(2px)",
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl relative overflow-hidden">
-                  {/* Decorative elements */}
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-xl -translate-y-8 translate-x-8"></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-400/20 to-pink-400/20 rounded-full blur-lg translate-y-4 -translate-x-4"></div>
-
-                  <div className="relative z-10">
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">Q</span>
-                      </div>
-                      <h4 className="text-white font-bold text-xl md:text-2xl leading-tight pt-2">
-                        {faq.question}
-                      </h4>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">A</span>
-                      </div>
-                      <p className="text-gray-200 text-base md:text-lg leading-relaxed pt-2 font-medium">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 transform translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Progress indicators */}
-          <div className="flex justify-center items-center gap-3 mt-8">
-            {faqData.map((_, index) => (
-              <div
-                key={index}
-                className={`transition-all duration-500 rounded-full cursor-pointer
-                  ${
-                    index === currentFaq
-                      ? "w-8 h-2 bg-green-400 shadow-lg shadow-green-400/50"
-                      : "w-2 h-2 bg-white/30 hover:bg-white/50"
-                  }
-                `}
-                onClick={() => setCurrentFaq(index)}
-              ></div>
-            ))}
           </div>
         </div>
       </div>
@@ -638,7 +611,7 @@ const HeroSection = () => {
         `}
       >
         <svg
-          className="relative block w-full h-[60px] sm:h-[80px] md:h-[100px] lg:h-[50px]"
+          className="relative block w-full h-[60px] sm:h-[80px] md:h-[100px] lg:h-[0px]"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 1200 120"
           preserveAspectRatio="none"

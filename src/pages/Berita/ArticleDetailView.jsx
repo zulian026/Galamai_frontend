@@ -185,7 +185,7 @@ export default function ArticleDetailPage() {
 
           {/* Back Button */}
           <button
-            onClick={() => navigate("/artikel")}
+            onClick={() => navigate("/berita/artikel")}
             className="absolute top-6 left-6 z-20 flex items-center space-x-2 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full hover:bg-white/20 transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />

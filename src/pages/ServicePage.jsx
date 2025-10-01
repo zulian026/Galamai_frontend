@@ -66,10 +66,10 @@ export default function LayananSidebarPage() {
       {/* Hero */}
       <section>
         <div
-          className="relative h-64 md:h-80 flex items-center justify-center bg-cover bg-center"
+          className="relative h-96 flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroBg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-header/90 to-blue-800/90"></div>
+          <div className="absolute inset-0 bg-header/95 "></div>
           <div className="relative z-10 text-center text-white px-4">
             <h1 className="text-3xl md:text-5xl font-bold mb-2">Layanan</h1>
             <p className="text-sm md:text-lg max-w-2xl mx-auto opacity-90">

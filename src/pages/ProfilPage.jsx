@@ -43,7 +43,7 @@ export default function ProfilPage() {
           className="relative h-96 flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroBg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-header/90 to-blue-800/90"></div>
+          <div className="absolute inset-0 bg-header/95"></div>
           <div className="relative z-10 text-center text-white px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Profil Balai POM
@@ -59,8 +59,9 @@ export default function ProfilPage() {
       <section className="container mx-auto px-6 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* SIDEBAR Navigation */}
+          {/* SIDEBAR Navigation */}
           <div className="lg:w-1/4">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 lg:sticky lg:top-24">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
               <div className="flex items-center mb-6 pb-4 border-b border-gray-100">
                 <div className="w-10 h-10 bg-header rounded-xl flex items-center justify-center mr-3">
                   <Info className="w-5 h-5 text-white" />

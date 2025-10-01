@@ -3,6 +3,10 @@ import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
+// ✅ Import ToastProvider
+import { ToastProvider } from "./contexts/ToastContext";
+import { ConfirmModalProvider } from "./contexts/ConfirmModalContext";
+
 // Layouts
 import MainLayout from "./layouts/MainLayout";
 import AuthLayout from "./layouts/AuthLayout";
@@ -24,8 +28,6 @@ import NewsPage from "./pages/Berita/NewsPage";
 import ArticlePage from "./pages/Berita/Article";
 import NotFound from "./pages/NotFound";
 
-// Chat Widget
-import ChatWidget from "./components/ChatWidget";
 import Users from "./pages/Dashboard/Users/Users";
 import AplikasiDashboard from "./pages/Dashboard/Konten/Layanan_Aplikasi/AplikasiDashboard";
 import LayananPage from "./pages/Dashboard/Layanan/LayananPage";
@@ -38,65 +40,65 @@ import AdminProfilPage from "./pages/Dashboard/Konten/Profil/ProfilPage";
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <ScrollToTop />
+      <ToastProvider>
+        <Router>
+          <ConfirmModalProvider>
+            <ScrollToTop />
 
-        <Routes>
-          {/* Publik */}
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/profil" element={<ProfilPage />} />
-            <Route path="/layanan" element={<ServicePage />} />
-            <Route path="/layanan/biaya-uji" element={<BiayaUji />} />
-            <Route path="/layanan/pengaduan" element={<Pengaduan />} />
-            <Route
-              path="/layanan/whistle-blowing"
-              element={<WhistleBlowing />}
-            />
-            <Route path="/layanan/pertanyaan" element={<Pertanyaan />} />
-            <Route path="/berita/berita-event" element={<NewsPage />} />
-            <Route path="/berita/artikel" element={<ArticlePage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/kontak" element={<ContactPage />} />
-            // Di App.jsx atau router config
-            <Route path="/berita" element={<NewsPage />} />
-            <Route path="/:type/:id" element={<NewsDetailPage />} />
-            <Route path="/artikel/:id" element={<ArticleDetailPage />} />
-          </Route>
+            <Routes>
+              {/* Publik */}
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/profil" element={<ProfilPage />} />
+                <Route path="/layanan" element={<ServicePage />} />
+                <Route path="/layanan/biaya-uji" element={<BiayaUji />} />
+                <Route path="/layanan/pengaduan" element={<Pengaduan />} />
+                <Route
+                  path="/layanan/whistle-blowing"
+                  element={<WhistleBlowing />}
+                />
+                <Route path="/layanan/pertanyaan" element={<Pertanyaan />} />
+                <Route path="/berita/berita-event" element={<NewsPage />} />
+                <Route path="/berita/artikel" element={<ArticlePage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/kontak" element={<ContactPage />} />
+                <Route path="/berita" element={<NewsPage />} />
+                <Route path="/:type/:id" element={<NewsDetailPage />} />
+                <Route path="/artikel/:id" element={<ArticleDetailPage />} />
+              </Route>
 
-          {/* Auth */}
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-          </Route>
+              {/* Auth */}
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<Login />} />
+              </Route>
 
-          {/* Dashboard (Protected) */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/users" element={<Users />} />
-            <Route
-              path="/dashboard/konten/Layanan_Aplikasi"
-              element={<AplikasiDashboard />}
-            />
-            <Route path="/dashboard/Layanan" element={<LayananPage />} />
-            <Route path="/dashboard/Berita" element={<BeritaEvent />} />
-            <Route path="/dashboard/konten/artikel" element={<Artikel />} />
-            <Route path="/dashboard/profil" element={<AdminProfilPage />} />
+              {/* Dashboard (Protected) */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/users" element={<Users />} />
+                <Route
+                  path="/dashboard/konten/Layanan_Aplikasi"
+                  element={<AplikasiDashboard />}
+                />
+                <Route path="/dashboard/Layanan" element={<LayananPage />} />
+                <Route path="/dashboard/Berita" element={<BeritaEvent />} />
+                <Route path="/dashboard/konten/artikel" element={<Artikel />} />
+                <Route path="/dashboard/profil" element={<AdminProfilPage />} />
 
-            {/* kalau ada halaman lain tambahin disini */}
-          </Route>
+                {/* kalau ada halaman lain tambahin disini */}
+              </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-
-        {/* === Bubble Chat selalu muncul === */}
-        <ChatWidget />
-      </Router>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ConfirmModalProvider>
+        </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

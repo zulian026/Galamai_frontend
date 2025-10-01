@@ -5,7 +5,7 @@ import LayananUtama from "../components/sections/Service";
 import AboutSection from "../components/sections/About";
 import NewsSection from "../components/sections/News";
 import ArticleSection from "../components/sections/Article";
-import FaqSection from "../components/sections/Faq";
+
 
 export default function HomePage() {
   return (

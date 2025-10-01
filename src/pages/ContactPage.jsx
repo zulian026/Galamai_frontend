@@ -37,7 +37,7 @@ export default function ContactPage() {
           className="relative h-96 flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroBg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-header/90 to-blue-800/90"></div>
+          <div className="absolute inset-0 bg-header/95"></div>
           <div className="relative z-10 text-center text-white px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Kontak Kami</h1>
             <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-90">

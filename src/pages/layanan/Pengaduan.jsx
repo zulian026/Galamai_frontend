@@ -414,7 +414,7 @@ export default function PengaduanPage() {
                   </div>
                   <div className="mb-6">
                     <label className="block text-gray-700 font-medium mb-3 text-lg">
-                      Jelaskan pertanyaan atau masalah Anda{" "}
+                      Jelaskan masalah Anda{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <textarea

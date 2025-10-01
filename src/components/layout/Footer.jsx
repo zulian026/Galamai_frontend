@@ -39,15 +39,14 @@ export default function Footer() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          
           {/* Logo and Organization Info */}
           <div className="text-center lg:text-left">
             <div className="flex flex-col items-center lg:items-start mb-6">
               <div className="bg-white p-4 rounded-2xl shadow-lg mb-4 transform hover:scale-105 transition-transform duration-300">
-                <img 
-                  src={logo} 
-                  alt="BPOM Logo" 
-                  className="w-20 h-20 object-contain" 
+                <img
+                  src={logo}
+                  alt="BPOM Logo"
+                  className="w-20 h-20 object-contain"
                 />
               </div>
               <div>
@@ -62,14 +61,22 @@ export default function Footer() {
                 </p>
               </div>
             </div>
-            
+
             {/* Social Media */}
             <div className="flex justify-center lg:justify-start space-x-4">
               {[
-                { icon: Facebook, color: "hover:bg-blue-600", label: "Facebook" },
+                {
+                  icon: Facebook,
+                  color: "hover:bg-blue-600",
+                  label: "Facebook",
+                },
                 { icon: Twitter, color: "hover:bg-blue-400", label: "Twitter" },
-                { icon: Instagram, color: "hover:bg-pink-500", label: "Instagram" },
-                { icon: Youtube, color: "hover:bg-red-500", label: "YouTube" }
+                {
+                  icon: Instagram,
+                  color: "hover:bg-pink-500",
+                  label: "Instagram",
+                },
+                { icon: Youtube, color: "hover:bg-red-500", label: "YouTube" },
               ].map(({ icon: Icon, color, label }) => (
                 <a
                   key={label}
@@ -90,17 +97,19 @@ export default function Footer() {
               Menu Navigasi
             </h3>
             <ul className="space-y-3">
-              {["Beranda", "Profil", "Layanan", "Berita", "Faq", "Kontak"].map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    className="text-blue-100 hover:text-white hover:pl-2 transition-all duration-300 flex items-center justify-center lg:justify-start group"
-                  >
-                    <span className="w-0 group-hover:w-2 h-0.5 bg-orange-400 mr-0 group-hover:mr-2 transition-all duration-300"></span>
-                    {item}
-                  </a>
-                </li>
-              ))}
+              {["Beranda", "Profil", "Layanan", "Berita", "Faq", "Kontak"].map(
+                (item) => (
+                  <li key={item}>
+                    <a
+                      href="#"
+                      className="text-blue-100 hover:text-white hover:pl-2 transition-all duration-300 flex items-center justify-center lg:justify-start group"
+                    >
+                      <span className="w-0 group-hover:w-2 h-0.5 bg-orange-400 mr-0 group-hover:mr-2 transition-all duration-300"></span>
+                      {item}
+                    </a>
+                  </li>
+                )
+              )}
             </ul>
 
             {/* Visitor Stats */}
@@ -125,27 +134,15 @@ export default function Footer() {
               </div>
             </div>
           </div>
-
-
         </div>
 
         {/* Bottom Copyright Section */}
         <div className="border-t border-white/20 pt-8 mt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-blue-200 text-sm text-center md:text-left">
-              © 2024 Balai Besar POM di Padang. Semua hak dilindungi undang-undang.
+              © 2024 Balai Besar POM di Padang. Semua hak dilindungi
+              undang-undang.
             </p>
-            <div className="flex space-x-6 text-sm">
-              <a href="#" className="text-blue-200 hover:text-white transition-colors duration-300">
-                Kebijakan Privasi
-              </a>
-              <a href="#" className="text-blue-200 hover:text-white transition-colors duration-300">
-                Syarat & Ketentuan
-              </a>
-              <a href="#" className="text-blue-200 hover:text-white transition-colors duration-300">
-                Sitemap
-              </a>
-            </div>
           </div>
         </div>
       </div>

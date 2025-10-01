@@ -24,46 +24,56 @@ export default function ArticlePage() {
   const [error, setError] = useState(null);
   const itemsPerPage = 6;
 
-  // Fetch artikel dari backend
+  // Fetch artikel dari backend - HANYA YANG PUBLISHED
   useEffect(() => {
     const fetchArticles = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await artikelService.getAll();
+        // 🔹 GUNAKAN getByStatus dengan status "publish" 
+        const response = await artikelService.getByStatus("publish");
+        
         if (response.success) {
           // Transform data sesuai dengan struktur model Artikel
-          const transformedArticles = response.data.map((article) => ({
-            ...article,
-            category: "Artikel", // default category
-            slug: `artikel-${article.id}`,
-            // Buat excerpt dari description (hilangkan HTML tags)
-            excerpt: article.description
-              ? article.description.replace(/<[^>]*>/g, "").substring(0, 150) +
-                "..."
-              : "Baca artikel lengkap untuk informasi lebih detail...",
-            // Format tanggal dari field tanggal atau created_at
-            date: article.tanggal
-              ? new Date(article.tanggal).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })
-              : article.created_at
-              ? new Date(article.created_at).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })
-              : new Date().toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                }),
-            // Gunakan image_url jika ada, fallback ke image atau default
-            image: article.image_url || article.image || heroBackground,
-          }));
+          const transformedArticles = response.data
+            .filter(article => article.status === 'publish') // 🔹 DOUBLE CHECK filter publish
+            .map((article) => ({
+              ...article,
+              category: "Artikel", // default category
+              slug: `artikel-${article.id}`,
+              // Buat excerpt dari description (hilangkan HTML tags)
+              excerpt: article.description
+                ? article.description.replace(/<[^>]*>/g, "").substring(0, 150) +
+                  "..."
+                : "Baca artikel lengkap untuk informasi lebih detail...",
+              // Format tanggal dari field tanggal atau created_at
+              date: article.tanggal
+                ? new Date(article.tanggal).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : article.created_at
+                ? new Date(article.created_at).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : new Date().toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  }),
+              // Gunakan image_url jika ada, fallback ke image atau default
+              image: article.image_url || article.image || heroBackground,
+            }));
+          
           setArticles(transformedArticles);
+          
+          // 🔹 DEBUG: Log untuk memastikan hanya artikel publish yang dimuat
+          console.log("Published articles loaded:", transformedArticles.length);
+          console.log("Articles status:", transformedArticles.map(a => ({ id: a.id, title: a.title, status: a.status })));
+          
         } else {
           setError("Gagal memuat artikel");
         }
@@ -87,7 +97,11 @@ export default function ArticlePage() {
       article.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
       selectedCategory === "Semua" || article.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    
+    // 🔹 PASTIKAN HANYA ARTIKEL PUBLISH (extra safety)
+    const isPublished = article.status === 'publish';
+    
+    return matchesSearch && matchesCategory && isPublished;
   });
 
   // Pagination
@@ -124,6 +138,7 @@ export default function ArticlePage() {
         <div className="absolute top-4 left-4">
           <CategoryBadge category={article.category} />
         </div>
+        
       </div>
       <div className="p-6">
         <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
@@ -171,6 +186,7 @@ export default function ArticlePage() {
           <div className="absolute top-4 left-4">
             <CategoryBadge category={article.category} />
           </div>
+        
         </div>
         <div className="w-2/3 p-6">
           <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
@@ -190,10 +206,13 @@ export default function ArticlePage() {
 
           <p className="text-gray-600 mb-4 line-clamp-2">{article.excerpt}</p>
 
-          <button className="flex items-center gap-2 text-blue-600 font-medium hover:gap-3 transition-all duration-200">
+          <Link
+            to={`/artikel/${article.id}`}
+            className="flex items-center gap-2 text-blue-600 font-medium hover:gap-3 transition-all duration-200"
+          >
             Baca Selengkapnya
             <ChevronRight size={16} />
-          </button>
+          </Link>
         </div>
       </div>
     </div>
@@ -206,7 +225,7 @@ export default function ArticlePage() {
         className="relative h-96 flex items-center justify-center bg-cover bg-center"
         style={{ backgroundImage: `url(${heroBackground})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-blue-800/90"></div>
+        <div className="absolute inset-0  bg-header/95 "></div>
         <div className="relative z-10 text-center text-white px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Artikel BPOM</h1>
           <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-90">
@@ -284,7 +303,7 @@ export default function ArticlePage() {
           <div className="flex justify-between items-center text-sm text-gray-600">
             <p>
               Menampilkan {currentArticles.length} dari{" "}
-              {filteredArticles.length} artikel
+              {filteredArticles.length} artikel published
               {searchTerm && ` untuk "${searchTerm}"`}
               {selectedCategory !== "Semua" &&
                 ` dalam kategori "${selectedCategory}"`}
@@ -300,7 +319,7 @@ export default function ArticlePage() {
                 className="animate-spin text-blue-600 mx-auto mb-4"
                 size={48}
               />
-              <p className="text-gray-600">Memuat artikel...</p>
+              <p className="text-gray-600">Memuat artikel published...</p>
             </div>
           </div>
         )}
@@ -394,11 +413,10 @@ export default function ArticlePage() {
                   <Search size={64} className="mx-auto" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                  Tidak ada artikel ditemukan
+                  Tidak ada artikel published
                 </h3>
                 <p className="text-gray-500">
-                  Coba ubah kata kunci pencarian atau pilih kategori yang
-                  berbeda
+                  Belum ada artikel yang dipublikasikan atau coba ubah kata kunci pencarian
                 </p>
               </div>
             )}
