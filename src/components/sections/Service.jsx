@@ -50,6 +50,7 @@ export default function LayananKami() {
   return (
     <section
       ref={sectionRef}
+      id="aplikasi"
       className="relative w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-12 xl:px-20 overflow-hidden bg-white"
     >
       <div className="max-w-7xl mx-auto relative z-10">

@@ -29,6 +29,20 @@ export default function NewsSection() {
     return colors[category] || "bg-gray-100 text-gray-800";
   };
 
+  // Function format tanggal
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+    const options = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+
+    return date.toLocaleDateString("id-ID", options);
+  };
+
   // Fetch data dari API
   useEffect(() => {
     const fetchNews = async () => {
@@ -188,7 +202,7 @@ export default function NewsSection() {
                         </div>
                         <div className="lg:col-span-2 p-6 md:p-8 lg:p-10 flex flex-col justify-center space-y-6">
                           <div className="flex items-center text-sm text-gray-500 gap-4">
-                            <span>{news.created_at}</span>
+                            <span>{formatDate(news.created_at)}</span>
                             <span className="flex items-center gap-1">
                               <svg
                                 className="w-4 h-4"
@@ -356,7 +370,7 @@ export default function NewsSection() {
                   </div>
                   <div className="p-5 space-y-3">
                     <div className="flex items-center text-xs text-gray-500 gap-3">
-                      <span>{news.created_at}</span>
+                      <span>{formatDate(news.created_at)}</span>
                     </div>
                     <h4 className="text-base font-bold text-black leading-tight group-hover:text-green-600 transition-colors duration-300">
                       <a
@@ -401,3 +415,4 @@ export default function NewsSection() {
     </section>
   );
 }
+

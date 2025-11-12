@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import axios from "axios";
-import ReactQuill, { Quill } from "react-quill-new";
+import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import {
   Plus,
@@ -10,33 +10,24 @@ import {
   FileText,
   Calendar,
   Loader2,
-  Table,
-  Minus,
-  Code,
-  Lightbulb,
   Search,
   Edit3,
   AlertCircle,
-  X, // Added missing X icon import
+  X,
 } from "lucide-react";
-
-// Import table module for ReactQuill
-  // const TableModule = Quill.import("formats/table");
-  // const TableRow = Quill.import("formats/table-row");
-  // const TableCell = Quill.import("formats/table-cell");
-  // const TableHeader = Quill.import("formats/table-header");
 
 export default function AdminLayananPage() {
   const [layanans, setLayanans] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const apiBase = "http://localhost:8000/api/layanans";
+  const apiBase = "http://127.0.0.1:8000/api/layanans";
   const quillRef = useRef(null);
 
   // Function to get auth token from localStorage
@@ -68,10 +59,8 @@ export default function AdminLayananPage() {
     (response) => response,
     (error) => {
       if (error.response?.status === 401) {
-        // Token might be expired or invalid
         localStorage.removeItem("token");
         localStorage.removeItem("auth_token");
-        // Redirect to login or show appropriate message
         setError("Sesi Anda telah berakhir. Silakan login kembali.");
       }
       return Promise.reject(error);
@@ -82,12 +71,39 @@ export default function AdminLayananPage() {
     try {
       setLoading(true);
       setError(null);
-      // Use regular axios for public endpoints (index, show)
       const res = await axios.get(apiBase);
-      setLayanans(res.data);
+
+      console.log("API Response:", res.data); // Debug log
+
+      // Handle Laravel API response format: { success, message, data }
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        setLayanans(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        // Fallback if API returns array directly
+        setLayanans(res.data);
+      } else {
+        console.warn("Unexpected response format:", res.data);
+        setLayanans([]);
+      }
     } catch (err) {
       console.error("Gagal fetch:", err);
-      setError("Gagal memuat data layanan. Silakan coba lagi.");
+      console.error("Error details:", err.response?.data);
+
+      // More detailed error message
+      let errorMessage = "Gagal memuat data layanan.";
+      if (err.response) {
+        errorMessage += ` Status: ${err.response.status}`;
+        if (err.response.data?.message) {
+          errorMessage += ` - ${err.response.data.message}`;
+        }
+      } else if (err.request) {
+        errorMessage += " Server tidak merespons. Pastikan backend berjalan.";
+      } else {
+        errorMessage += ` ${err.message}`;
+      }
+
+      setError(errorMessage);
+      setLayanans([]);
     } finally {
       setLoading(false);
     }
@@ -96,14 +112,27 @@ export default function AdminLayananPage() {
   const loadLayanan = async (id) => {
     try {
       setError(null);
-      // Use regular axios for public endpoints (index, show)
       const res = await axios.get(`${apiBase}/${id}`);
-      setActiveId(res.data.id);
-      setTitle(res.data.title);
-      setDetails(res.data.details || "");
+
+      console.log("Load Layanan Response:", res.data); // Debug log
+
+      // Handle Laravel API response format
+      const layananData = res.data.success ? res.data.data : res.data;
+
+      setActiveId(layananData.id);
+      setTitle(layananData.title);
+      setDetails(layananData.details || "");
+      setLinkUrl(layananData.link_url || "");
     } catch (err) {
       console.error("Gagal load:", err);
-      setError("Gagal memuat layanan. Silakan coba lagi.");
+      console.error("Error details:", err.response?.data);
+
+      let errorMessage = "Gagal memuat layanan.";
+      if (err.response?.data?.message) {
+        errorMessage += ` ${err.response.data.message}`;
+      }
+
+      setError(errorMessage);
     }
   };
 
@@ -111,6 +140,7 @@ export default function AdminLayananPage() {
     setActiveId(null);
     setTitle("");
     setDetails("");
+    setLinkUrl("");
     setError(null);
   };
 
@@ -125,20 +155,31 @@ export default function AdminLayananPage() {
     setError(null);
     try {
       if (activeId) {
-        // Use apiClient for authenticated endpoints
-        await apiClient.put(`/${activeId}`, { title, details });
+        await apiClient.put(`/${activeId}`, {
+          title,
+          details,
+          link_url: linkUrl,
+        });
       } else {
-        // Use apiClient for authenticated endpoints
-        await apiClient.post("", { title, details });
+        await apiClient.post("", { title, details, link_url: linkUrl });
       }
       await fetchLayanans();
       clearForm();
     } catch (err) {
       console.error("Gagal simpan:", err);
+      console.error("Error details:", err.response?.data);
+
       if (err.response?.status === 401) {
         setError("Tidak terautentikasi. Silakan login kembali.");
       } else {
-        setError("Gagal menyimpan layanan. Silakan coba lagi.");
+        let errorMessage = "Gagal menyimpan layanan.";
+        if (err.response?.data?.message) {
+          errorMessage += ` ${err.response.data.message}`;
+        } else if (err.response?.data?.errors) {
+          const errors = Object.values(err.response.data.errors).flat();
+          errorMessage += ` ${errors.join(", ")}`;
+        }
+        setError(errorMessage);
       }
     } finally {
       setSaving(false);
@@ -151,99 +192,31 @@ export default function AdminLayananPage() {
 
     try {
       setError(null);
-      // Use apiClient for authenticated endpoints
       await apiClient.delete(`/${activeId}`);
       await fetchLayanans();
       clearForm();
     } catch (err) {
       console.error("Gagal hapus:", err);
+      console.error("Error details:", err.response?.data);
+
       if (err.response?.status === 401) {
         setError("Tidak terautentikasi. Silakan login kembali.");
       } else {
-        setError("Gagal menghapus layanan. Silakan coba lagi.");
-      }
-    }
-  };
-
-  // Custom toolbar handlers
-  const insertTable = () => {
-    const quill = quillRef.current?.getEditor();
-    if (!quill) return;
-
-    const range = quill.getSelection(true);
-    if (range) {
-      const rows = parseInt(prompt("Jumlah baris:", "3") || "3");
-      const cols = parseInt(prompt("Jumlah kolom:", "3") || "3");
-
-      let tableHTML = '<table class="custom-table"><tbody>';
-      for (let i = 0; i < rows; i++) {
-        tableHTML += "<tr>";
-        for (let j = 0; j < cols; j++) {
-          if (i === 0) {
-            tableHTML += "<th>Header " + (j + 1) + "</th>";
-          } else {
-            tableHTML += "<td>Cell " + i + "-" + (j + 1) + "</td>";
-          }
+        let errorMessage = "Gagal menghapus layanan.";
+        if (err.response?.data?.message) {
+          errorMessage += ` ${err.response.data.message}`;
         }
-        tableHTML += "</tr>";
-      }
-      tableHTML += "</tbody></table><p><br></p>";
-
-      const clipboard = quill.clipboard;
-      clipboard.dangerouslyPasteHTML(range.index, tableHTML);
-      quill.setSelection(range.index + tableHTML.length);
-    }
-  };
-
-  const insertDivider = () => {
-    const quill = quillRef.current?.getEditor();
-    if (!quill) return;
-
-    const range = quill.getSelection(true);
-    if (range) {
-      const dividerHTML = '<hr class="custom-divider"><p><br></p>';
-      quill.clipboard.dangerouslyPasteHTML(range.index, dividerHTML);
-      quill.setSelection(range.index + dividerHTML.length);
-    }
-  };
-
-  const insertCodeBlock = () => {
-    const quill = quillRef.current?.getEditor();
-    if (!quill) return;
-
-    const range = quill.getSelection(true);
-    if (range) {
-      quill.format("code-block", true);
-      quill.insertText(
-        range.index,
-        "// Masukkan kode di sini\n",
-        "code-block",
-        true
-      );
-    }
-  };
-
-  const insertCallout = () => {
-    const quill = quillRef.current?.getEditor();
-    if (!quill) return;
-
-    const range = quill.getSelection(true);
-    if (range) {
-      const types = ["info", "warning", "success", "error"];
-      const type = prompt(`Pilih tipe callout (${types.join("/")}):`);
-
-      if (types.includes(type)) {
-        const calloutHTML = `<div class="callout callout-${type}"><p><strong>${type.toUpperCase()}:</strong> Masukkan pesan di sini</p></div><p><br></p>`;
-        quill.clipboard.dangerouslyPasteHTML(range.index, calloutHTML);
-        quill.setSelection(range.index + calloutHTML.length);
+        setError(errorMessage);
       }
     }
   };
 
-  // Filter layanans based on search
-  const filteredLayanans = layanans.filter((layanan) =>
-    layanan.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter layanans based on search - with safety check
+  const filteredLayanans = Array.isArray(layanans)
+    ? layanans.filter((layanan) =>
+        layanan.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   useEffect(() => {
     fetchLayanans();
@@ -252,46 +225,20 @@ export default function AdminLayananPage() {
   // Memoized modules configuration
   const modules = useMemo(
     () => ({
-      toolbar: {
-        container: [
-          // Basic formatting
-          ["bold", "italic", "underline", "strike"],
-          [{ script: "sub" }, { script: "super" }],
-
-          // Headers and font
-          [{ header: [1, 2, 3, 4, 5, 6, false] }],
-          [{ font: [] }],
-          [{ size: ["small", false, "large", "huge"] }],
-
-          // Colors
-          [{ color: [] }, { background: [] }],
-
-          // Alignment
-          [{ align: [] }],
-
-          // Lists and indentation
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ indent: "-1" }, { indent: "+1" }],
-
-          // Blockquote and code
-          ["blockquote", "code-block"],
-
-          // Links and media
-          ["link", "image", "video"],
-
-          // Custom buttons
-          ["insertTable", "insertDivider", "insertCode", "insertCallout"],
-
-          // Clear formatting
-          ["clean"],
-        ],
-        handlers: {
-          insertTable,
-          insertDivider,
-          insertCode: insertCodeBlock,
-          insertCallout,
-        },
-      },
+      toolbar: [
+        ["bold", "italic", "underline", "strike"],
+        [{ script: "sub" }, { script: "super" }],
+        [{ header: [1, 2, 3, 4, 5, 6, false] }],
+        [{ font: [] }],
+        [{ size: ["small", false, "large", "huge"] }],
+        [{ color: [] }, { background: [] }],
+        [{ align: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ indent: "-1" }, { indent: "+1" }],
+        ["blockquote", "code-block"],
+        ["link", "image", "video"],
+        ["clean"],
+      ],
       history: {
         delay: 1000,
         maxStack: 50,
@@ -314,7 +261,6 @@ export default function AdminLayananPage() {
     "strike",
     "blockquote",
     "list",
-    "bullet",
     "indent",
     "link",
     "image",
@@ -352,7 +298,7 @@ export default function AdminLayananPage() {
         <div className="mx-6 mt-6 bg-red-50 border border-red-200 rounded-xl p-4">
           <div className="flex items-center">
             <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
-            <p className="text-red-800 flex-1">{error}</p>
+            <p className="text-red-800 flex-1 text-sm">{error}</p>
             <button
               onClick={() => setError(null)}
               className="ml-3 text-red-600 hover:text-red-800 transition-colors"
@@ -366,7 +312,6 @@ export default function AdminLayananPage() {
       <div className="flex h-[calc(100vh-120px)]">
         {/* Sidebar */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-          {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="font-semibold text-gray-900">Daftar Layanan</h2>
@@ -379,7 +324,6 @@ export default function AdminLayananPage() {
               </button>
             </div>
 
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -392,7 +336,6 @@ export default function AdminLayananPage() {
             </div>
           </div>
 
-          {/* Sidebar Content */}
           <div className="flex-1 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center items-center py-8">
@@ -466,7 +409,6 @@ export default function AdminLayananPage() {
 
         {/* Main Editor */}
         <div className="flex-1 bg-white flex flex-col">
-          {/* Editor Header */}
           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
               <div>
@@ -478,7 +420,6 @@ export default function AdminLayananPage() {
                 )}
               </div>
 
-              {/* Action Buttons */}
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -520,13 +461,11 @@ export default function AdminLayananPage() {
             </div>
           </div>
 
-          {/* Editor Content */}
           <div className="flex-1 flex flex-col p-6 overflow-hidden">
             <form
               onSubmit={handleSave}
               className="h-full flex flex-col space-y-5"
             >
-              {/* Title Input */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Judul Layanan <span className="text-red-500">*</span>
@@ -541,7 +480,19 @@ export default function AdminLayananPage() {
                 />
               </div>
 
-              {/* Content Editor */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Link URL
+                </label>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="https://contoh.com"
+                />
+              </div>
+
               <div className="flex-1 flex flex-col min-h-0">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Konten Layanan
@@ -564,9 +515,7 @@ export default function AdminLayananPage() {
         </div>
       </div>
 
-      {/* Enhanced Custom CSS */}
-      <style jsx global>{`
-        /* Quill Editor Styling */
+      <style>{`
         .ql-toolbar {
           border-top: none !important;
           border-left: none !important;
@@ -593,118 +542,14 @@ export default function AdminLayananPage() {
           color: #374151 !important;
         }
 
-        /* Custom Toolbar Button Icons */
-        .ql-insertTable .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertTable:before {
-          content: "⊞" !important;
-          font-size: 16px !important;
-          color: #6b7280 !important;
+        .ql-toolbar button:hover {
+          color: #3b82f6 !important;
         }
 
-        .ql-insertDivider .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertDivider:before {
-          content: "⚊" !important;
-          font-size: 16px !important;
-          color: #6b7280 !important;
+        .ql-toolbar button.ql-active {
+          color: #2563eb !important;
         }
 
-        .ql-insertCode .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertCode:before {
-          content: "</>" !important;
-          font-size: 12px !important;
-          color: #6b7280 !important;
-          font-weight: bold !important;
-        }
-
-        .ql-insertCallout .ql-stroke {
-          stroke: none !important;
-        }
-        .ql-insertCallout:before {
-          content: "💡" !important;
-          font-size: 14px !important;
-        }
-
-        /* Custom Table Styling */
-        .ql-editor .custom-table {
-          border-collapse: collapse !important;
-          width: 100% !important;
-          margin: 20px 0 !important;
-          border: 1px solid #d1d5db !important;
-          border-radius: 8px !important;
-          overflow: hidden !important;
-        }
-
-        .ql-editor .custom-table td,
-        .ql-editor .custom-table th {
-          border: 1px solid #d1d5db !important;
-          padding: 12px 16px !important;
-          min-width: 120px !important;
-          vertical-align: top !important;
-        }
-
-        .ql-editor .custom-table th {
-          background-color: #f3f4f6 !important;
-          font-weight: 600 !important;
-          text-align: left !important;
-          color: #374151 !important;
-        }
-
-        .ql-editor .custom-table tr:nth-child(even) {
-          background-color: #f9fafb !important;
-        }
-
-        .ql-editor .custom-table tr:hover {
-          background-color: #f3f4f6 !important;
-        }
-
-        /* Custom Divider */
-        .ql-editor .custom-divider {
-          margin: 24px 0 !important;
-          border: none !important;
-          border-top: 2px solid #e5e7eb !important;
-          height: 0 !important;
-        }
-
-        /* Callout Styling */
-        .ql-editor .callout {
-          padding: 16px !important;
-          margin: 20px 0 !important;
-          border-radius: 8px !important;
-          border-left: 4px solid !important;
-          font-size: 14px !important;
-        }
-
-        .ql-editor .callout-info {
-          background-color: #eff6ff !important;
-          border-left-color: #3b82f6 !important;
-          color: #1e40af !important;
-        }
-
-        .ql-editor .callout-warning {
-          background-color: #fffbeb !important;
-          border-left-color: #f59e0b !important;
-          color: #92400e !important;
-        }
-
-        .ql-editor .callout-success {
-          background-color: #f0fdf4 !important;
-          border-left-color: #10b981 !important;
-          color: #065f46 !important;
-        }
-
-        .ql-editor .callout-error {
-          background-color: #fef2f2 !important;
-          border-left-color: #ef4444 !important;
-          color: #991b1b !important;
-        }
-
-        /* Code Block Styling */
         .ql-editor pre.ql-syntax {
           background: #1f2937 !important;
           border: 1px solid #374151 !important;
@@ -719,7 +564,6 @@ export default function AdminLayananPage() {
           color: #e5e7eb !important;
         }
 
-        /* Blockquote Styling */
         .ql-editor blockquote {
           border-left: 4px solid #6b7280 !important;
           padding: 16px 20px !important;
@@ -741,7 +585,6 @@ export default function AdminLayananPage() {
           font-family: Georgia, serif !important;
         }
 
-        /* Improve list styling */
         .ql-editor ul,
         .ql-editor ol {
           margin: 16px 0 !important;
@@ -753,7 +596,6 @@ export default function AdminLayananPage() {
           line-height: 1.6 !important;
         }
 
-        /* Link styling */
         .ql-editor a {
           color: #3b82f6 !important;
           text-decoration: none !important;
@@ -765,14 +607,12 @@ export default function AdminLayananPage() {
           border-bottom-color: #3b82f6 !important;
         }
 
-        /* Image styling */
         .ql-editor img {
           border-radius: 8px !important;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
           margin: 16px 0 !important;
         }
 
-        /* Improve scrolling */
         .ql-editor::-webkit-scrollbar {
           width: 8px;
         }
@@ -791,7 +631,6 @@ export default function AdminLayananPage() {
           background: #94a3b8;
         }
 
-        /* Prevent toolbar overflow */
         .ql-toolbar .ql-formats {
           margin-right: 8px !important;
         }

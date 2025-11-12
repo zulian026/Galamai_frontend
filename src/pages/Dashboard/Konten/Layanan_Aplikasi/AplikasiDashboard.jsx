@@ -20,10 +20,13 @@ import {
 } from "lucide-react";
 import { aplikasiService } from "../../../../services/aplikasiService";
 import { useAuth } from "../../../../contexts/AuthContext";
+import { useToast } from "../../../../contexts/ToastContext";
+import { useConfirm } from "../../../../contexts/ConfirmContext";
 
 export default function AplikasiDashboard() {
   const { user, token, loading: authLoading } = useAuth();
 
+  const { confirm } = useConfirm();
   const [apps, setApps] = useState([]);
   const [form, setForm] = useState({
     nama_app: "",
@@ -39,6 +42,7 @@ export default function AplikasiDashboard() {
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { showToast } = useToast();
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,11 +70,13 @@ export default function AplikasiDashboard() {
 
     if (!token) {
       setError("Anda harus login untuk melakukan aksi ini!");
+      showToast("Anda harus login untuk melakukan aksi ini!", "error");
       return;
     }
 
     if (!form.nama_app.trim()) {
       setError("Nama aplikasi wajib diisi!");
+      showToast("Nama aplikasi wajib diisi!", "error");
       return;
     }
 
@@ -89,46 +95,48 @@ export default function AplikasiDashboard() {
       if (editingId) {
         await aplikasiService.update(editingId, formData, token);
         setError(null);
-        console.log("Aplikasi berhasil diperbarui!");
+        showToast("Aplikasi berhasil diperbarui!", "success");
       } else {
         await aplikasiService.add(formData, token);
         setError(null);
-        console.log("Aplikasi berhasil ditambahkan!");
+        showToast("Aplikasi berhasil ditambahkan!", "success");
       }
 
       resetForm();
       await fetchApps();
     } catch (err) {
       console.error("Error submitting form:", err);
-      setError(
-        editingId
-          ? "Gagal memperbarui aplikasi. Silakan coba lagi."
-          : "Gagal menambahkan aplikasi. Silakan coba lagi."
-      );
+      const msg = editingId
+        ? "Gagal memperbarui aplikasi. Silakan coba lagi."
+        : "Gagal menambahkan aplikasi. Silakan coba lagi.";
+      setError(msg);
+      showToast(msg, "error");
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  // Hapus aplikasi menggunakan aplikasiService
   const handleDelete = async (id) => {
     if (!token) {
       setError("Anda harus login untuk melakukan aksi ini!");
+      showToast("Anda harus login untuk melakukan aksi ini!", "error");
       return;
     }
 
     const app = apps.find((a) => a.id_aplikasi === id);
-    if (!window.confirm(`Yakin hapus aplikasi "${app?.nama_app}"?`)) return;
 
-    try {
-      setError(null);
-      await aplikasiService.delete(id, token);
-      console.log("Aplikasi berhasil dihapus!");
-      await fetchApps();
-    } catch (err) {
-      console.error("Error deleting app:", err);
-      setError("Gagal menghapus aplikasi. Silakan coba lagi.");
-    }
+    confirm(`Yakin ingin menghapus aplikasi "${app?.nama_app}"?`, async () => {
+      try {
+        setError(null);
+        await aplikasiService.delete(id, token);
+        showToast(`Aplikasi "${app?.nama_app}" berhasil dihapus!`, "success");
+        await fetchApps();
+      } catch (err) {
+        console.error("Error deleting app:", err);
+        setError("Gagal menghapus aplikasi. Silakan coba lagi.");
+        showToast("Gagal menghapus aplikasi. Silakan coba lagi.", "error");
+      }
+    });
   };
 
   // Edit aplikasi → isi form dengan data lama

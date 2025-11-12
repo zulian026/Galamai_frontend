@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import heroBg from "../assets/images/hero-bg.png";
 import { Info, ChevronRight, Loader2 } from "lucide-react";
 import axios from "axios";
+import "../styles/quill-style.css"; // Import CSS untuk style Quill
 
 export default function ProfilPage() {
   const [tabs, setTabs] = useState([]); // daftar menu profil
@@ -58,7 +59,6 @@ export default function ProfilPage() {
       {/* LAYOUT dengan SIDEBAR */}
       <section className="container mx-auto px-6 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* SIDEBAR Navigation */}
           {/* SIDEBAR Navigation */}
           <div className="lg:w-1/4">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
@@ -128,8 +128,9 @@ export default function ProfilPage() {
                         className="rounded-xl w-full max-h-96 object-cover"
                       />
                     )}
+                    {/* Wrapper dengan class quill-content untuk styling Quill */}
                     <div
-                      className="text-gray-700 leading-relaxed"
+                      className="quill-content"
                       dangerouslySetInnerHTML={{ __html: content.details }}
                     />
                   </div>

@@ -23,11 +23,9 @@ import {
   User,
 } from "lucide-react";
 
-// Import table module for ReactQuill
-// const TableModule = Quill.import("formats/table");
-// const TableRow = Quill.import("formats/table-row");
-// const TableCell = Quill.import("formats/table-cell");
-// const TableHeader = Quill.import("formats/table-header");
+import { useToast } from "../../../../contexts/ToastContext";
+import { useConfirm } from "../../../../contexts/ConfirmContext";
+
 
 export default function AdminProfilPage() {
   const [profils, setProfils] = useState([]);
@@ -39,6 +37,8 @@ export default function AdminProfilPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { showToast } = useToast();
+const { confirm } = useConfirm();
 
   const apiBase = "http://localhost:8000/api/profil";
   const quillRef = useRef(null);
@@ -119,58 +119,59 @@ export default function AdminProfilPage() {
   };
 
   const handleSave = async (e) => {
-    e.preventDefault();
-    if (!title.trim()) {
-      setError("Judul profil harus diisi!");
-      return;
+  e.preventDefault();
+  if (!title.trim()) {
+    showToast("Judul profil harus diisi!", "error");
+    return;
+  }
+
+  setSaving(true);
+  try {
+    if (activeId) {
+      await apiClient.put(`/${activeId}`, { title, details });
+      showToast("Profil berhasil diperbarui!", "success");
+    } else {
+      await apiClient.post("", { title, details });
+      showToast("Profil baru berhasil dibuat!", "success");
     }
-
-    setSaving(true);
-    setError(null);
-    try {
-      if (activeId) {
-        // Use apiClient for authenticated endpoints
-        await apiClient.put(`/${activeId}`, { title, details });
-      } else {
-        // Use apiClient for authenticated endpoints
-        await apiClient.post("", { title, details });
-      }
-      await fetchProfils();
-      clearForm();
-    } catch (err) {
-      console.error("Gagal simpan:", err);
-      if (err.response?.status === 401) {
-        setError("Tidak terautentikasi. Silakan login kembali.");
-      } else if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(errorMessages.join(", "));
-      } else {
-        setError("Gagal menyimpan profil. Silakan coba lagi.");
-      }
-    } finally {
-      setSaving(false);
+    await fetchProfils();
+    clearForm();
+  } catch (err) {
+    console.error("Gagal simpan:", err);
+    if (err.response?.status === 401) {
+      showToast("Sesi Anda telah berakhir. Silakan login kembali.", "error");
+    } else if (err.response?.data?.errors) {
+      const errorMessages = Object.values(err.response.data.errors).flat();
+      showToast(errorMessages.join(", "), "error");
+    } else {
+      showToast("Gagal menyimpan profil. Silakan coba lagi.", "error");
     }
-  };
+  } finally {
+    setSaving(false);
+  }
+};
 
-  const handleDelete = async () => {
-    if (!activeId) return;
-    if (!window.confirm("Yakin hapus profil ini?")) return;
 
+  const handleDelete = () => {
+  if (!activeId) return;
+
+  confirm("Yakin ingin menghapus profil ini?", async () => {
     try {
-      setError(null);
-      // Use apiClient for authenticated endpoints
       await apiClient.delete(`/${activeId}`);
       await fetchProfils();
       clearForm();
+      showToast("Profil berhasil dihapus!", "success");
     } catch (err) {
       console.error("Gagal hapus:", err);
       if (err.response?.status === 401) {
-        setError("Tidak terautentikasi. Silakan login kembali.");
+        showToast("Sesi Anda telah berakhir. Silakan login kembali.", "error");
       } else {
-        setError("Gagal menghapus profil. Silakan coba lagi.");
+        showToast("Gagal menghapus profil. Silakan coba lagi.", "error");
       }
     }
-  };
+  });
+};
+
 
   // Custom toolbar handlers
   const insertTable = () => {

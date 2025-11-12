@@ -1,4 +1,3 @@
-// src/pages/LayananSidebarPage.jsx
 import React, { useEffect, useState, useRef } from "react";
 import heroBg from "../assets/images/hero-bg.png";
 import { Search, FileText, Clock, Calendar } from "lucide-react";
@@ -10,21 +9,43 @@ export default function LayananSidebarPage() {
   const [activeLayanan, setActiveLayanan] = useState(null);
   const [activeLayananData, setActiveLayananData] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const apiBase = "http://localhost:8000/api/layanans";
   const contentRef = useRef(null);
 
   // ambil daftar layanan
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+
     axios
       .get(apiBase)
       .then((res) => {
-        setLayananList(res.data);
-        if (res.data.length > 0) {
-          setActiveLayanan(res.data[0].id); // default pilih pertama
+        console.log("API Response:", res.data);
+
+        // Handle Laravel API response format: { success, message, data }
+        let data = [];
+        if (res.data && res.data.success && Array.isArray(res.data.data)) {
+          data = res.data.data;
+        } else if (Array.isArray(res.data)) {
+          data = res.data;
         }
+
+        setLayananList(data);
+        if (data.length > 0) {
+          setActiveLayanan(data[0].id);
+        }
+        setLoading(false);
       })
-      .catch((err) => console.error("Gagal fetch:", err));
+      .catch((err) => {
+        console.error("Gagal fetch:", err);
+        console.error("Error details:", err.response?.data);
+        setError("Gagal memuat data layanan. Silakan refresh halaman.");
+        setLayananList([]);
+        setLoading(false);
+      });
   }, []);
 
   // ambil detail layanan
@@ -32,8 +53,17 @@ export default function LayananSidebarPage() {
     if (activeLayanan) {
       axios
         .get(`${apiBase}/${activeLayanan}`)
-        .then((res) => setActiveLayananData(res.data))
-        .catch((err) => console.error("Gagal load:", err));
+        .then((res) => {
+          console.log("Detail Response:", res.data);
+
+          // Handle Laravel API response format
+          const layananData = res.data.success ? res.data.data : res.data;
+          setActiveLayananData(layananData);
+        })
+        .catch((err) => {
+          console.error("Gagal load:", err);
+          console.error("Error details:", err.response?.data);
+        });
     }
   }, [activeLayanan]);
 
@@ -57,9 +87,11 @@ export default function LayananSidebarPage() {
     return () => observer.disconnect();
   }, [activeLayananData]);
 
-  const filteredLayanan = layananList.filter((layanan) =>
-    layanan.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLayanan = Array.isArray(layananList)
+    ? layananList.filter((layanan) =>
+        layanan.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 scroll-smooth">
@@ -99,9 +131,9 @@ export default function LayananSidebarPage() {
           </div>
 
           {/* List */}
-          <div className="flex flex-col gap-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300">
+          <div className="flex flex-col gap-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300">
             {filteredLayanan.length > 0 ? (
-              filteredLayanan.map((layanan) => (
+              filteredLayanan.map((layanan, index) => (
                 <button
                   key={layanan.id}
                   onClick={() => {
@@ -116,13 +148,24 @@ export default function LayananSidebarPage() {
                       });
                     }
                   }}
-                  className={`text-left px-4 py-3 rounded-xl transition-all ${
+                  className={`group text-left px-5 py-4 rounded-xl transition-all duration-300 flex items-start gap-4 ${
                     activeLayanan === layanan.id
-                      ? "bg-header text-white font-semibold shadow-md"
-                      : "bg-gray-100 hover:bg-gray-200"
+                      ? "bg-header text-white font-semibold shadow-lg scale-[1.02]"
+                      : "bg-gray-100 hover:bg-gray-200 hover:shadow-md hover:scale-[1.01]"
                   }`}
                 >
-                  {layanan.title}
+                  <span
+                    className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                      activeLayanan === layanan.id
+                        ? "bg-white text-header shadow-sm"
+                        : "bg-header text-white group-hover:scale-110"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="flex-1 leading-relaxed pt-0.5">
+                    {layanan.title}
+                  </span>
                 </button>
               ))
             ) : (
@@ -215,25 +258,23 @@ export default function LayananSidebarPage() {
                       }}
                     />
 
-                    {/* Call to Action */}
-                    <div className="mt-12 p-6 bg-gradient-to-r from-header/5 to-blue-50 rounded-2xl border border-header/10">
-                      <div className="text-center">
-                        <h3 className="text-xl font-semibold text-header mb-3">
-                          Butuh Bantuan Lebih Lanjut?
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                          Tim kami siap membantu Anda dengan layanan ini.
+                    {/* Link Eksternal */}
+                    {activeLayananData.link_url && (
+                      <div className="mt-8 text-center">
+                        <p className="mb-2 text-gray-700">
+                          Ingin melakukan pengaduan melalui Galamai? Silahkan
+                          klik tombol di bawah ini:
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                          <button className="px-6 py-3 bg-header text-white rounded-xl hover:bg-header/90 transition-colors font-medium">
-                            Hubungi Kami
-                          </button>
-                          <button className="px-6 py-3 border border-header text-header rounded-xl hover:bg-header/5 transition-colors font-medium">
-                            FAQ Layanan
-                          </button>
-                        </div>
+                        <a
+                          href={activeLayananData.link_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-6 py-3 bg-header text-white rounded-xl shadow hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          🔗 Kunjungi Halaman Layanan
+                        </a>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-16">

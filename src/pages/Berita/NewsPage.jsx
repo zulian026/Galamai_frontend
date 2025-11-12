@@ -17,6 +17,7 @@ import {
   Bookmark,
   Share2,
   ChevronLeft,
+  AlertCircle,
 } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay, EffectFade } from "swiper/modules";
@@ -119,6 +120,7 @@ export default function NewsPage() {
       }
     } catch (err) {
       console.error("Error fetching slider data:", err);
+      setError("Gagal memuat data");
     }
   };
 
@@ -129,6 +131,7 @@ export default function NewsPage() {
     reset = false
   ) => {
     setLoading(true);
+    setError(null);
     try {
       // ✅ Gunakan getByStatus dengan status 'publish'
       const response = await beritaEventService.getByStatus("publish", {
@@ -331,12 +334,35 @@ export default function NewsPage() {
     setSortBy(e.target.value);
   };
 
+  // ✅ UPDATED: Loading state untuk halaman pertama
   if (loading && currentPage === 1) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
-        <span className="ml-4 text-gray-700 font-medium">Memuat data...</span>
-      </div>
+      <main className="bg-gray-50">
+        <section>
+          <div
+            className="relative h-96 flex items-center justify-center bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroBg})` }}
+          >
+            <div className="absolute inset-0 bg-header/95"></div>
+            <div className="relative z-10 text-center text-white px-4">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Berita dan Event
+              </h1>
+              <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-90">
+                Informasi terkini seputar kegiatan, pengawasan, dan perkembangan
+                terbaru dari Balai POM di Padang
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 px-6 md:px-16">
+          <div className="max-w-7xl mx-auto text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+            <p className="mt-4 text-gray-600 font-medium">Memuat data...</p>
+          </div>
+        </section>
+      </main>
     );
   }
 
@@ -365,6 +391,21 @@ export default function NewsPage() {
           </div>
         </div>
       </section>
+
+      {/* ✅ Error State */}
+      {error && !loading && (
+        <section className="py-6 px-6 md:px-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-red-800">Terjadi Kesalahan</p>
+                <p className="text-sm text-red-600 mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Enhanced Search & Filter Bar */}
       <section className="bg-white shadow-lg sticky top-0 z-40">
@@ -488,8 +529,16 @@ export default function NewsPage() {
             </div>
           )}
 
+          {/* ✅ Loading State untuk Pagination */}
+          {paginationLoading && (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+              <p className="mt-4 text-gray-600 font-medium">Memuat data...</p>
+            </div>
+          )}
+
           {/* Featured Slider - Enhanced */}
-          {sliderItems.length > 0 && (
+          {sliderItems.length > 0 && !paginationLoading && (
             <div ref={swiperRef} className="mb-16">
               <div className="flex items-center justify-between mb-8">
                 <div>
@@ -609,16 +658,6 @@ export default function NewsPage() {
                   Halaman {currentPage} dari {totalPages}
                 </div>
               </div>
-
-              {/* Loading State for Pagination */}
-              {paginationLoading && (
-                <div className="text-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
-                  <span className="block mt-2 text-gray-600">
-                    Memuat data...
-                  </span>
-                </div>
-              )}
 
               <div
                 ref={latestGridRef}

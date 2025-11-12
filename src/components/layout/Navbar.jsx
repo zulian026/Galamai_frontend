@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, Menu, X, ChevronRight } from "lucide-react";
 import logo from "../../assets/images/logo.png";
+import { HashLink } from "react-router-hash-link";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -81,6 +82,7 @@ export default function Navbar() {
     { name: "BERANDA", path: "/" },
     { name: "PROFIL", path: "/profil" },
     { name: "LAYANAN", path: "/layanan" },
+    { name: "APLIKASI", path: "/#aplikasi" },
     {
       name: "BERITA",
       dropdown: [
@@ -151,7 +153,7 @@ export default function Navbar() {
       </div>
 
       {/* Logo Section */}
-      <div className="fixed top-0 left-0 z-20">
+      <div className="fixed top-1 left-0 z-20">
         <div className="py-3 pl-4 md:pl-5">
           <div
             className={`
@@ -313,27 +315,22 @@ export default function Navbar() {
                   </li>
                 ) : (
                   <li key={item.name}>
-                    <Link
-                      to={item.path}
-                      className={`
-                        text-base xl:text-sm font-bold cursor-pointer transition-all duration-200 
-                        ease-in-out px-3 py-2 rounded-md whitespace-nowrap
-                        ${
-                          isScrolled
-                            ? "text-white hover:text-green-400"
-                            : "text-white hover:text-green-400"
-                        }
-                        ${
-                          location.pathname === item.path
-                            ? isScrolled
-                              ? "text-blue-600"
-                              : "text-blue-200"
-                            : ""
-                        }
-                      `}
-                    >
-                      {item.name}
-                    </Link>
+                    {item.path.includes("#") ? (
+                      <HashLink
+                        smooth
+                        to={item.path}
+                        className="text-base xl:text-sm font-bold text-white hover:text-green-400 px-3 py-2"
+                      >
+                        {item.name}
+                      </HashLink>
+                    ) : (
+                      <Link
+                        to={item.path}
+                        className="text-base xl:text-sm font-bold text-white hover:text-green-400 px-3 py-2"
+                      >
+                        {item.name}
+                      </Link>
+                    )}
                   </li>
                 )
               )}
@@ -430,8 +427,7 @@ export default function Navbar() {
                         className={`
                           overflow-hidden transition-all duration-300 ease-out
                           ${
-                            item.name === "BERITA" &&
-                            isMobileBeritaDropdownOpen
+                            item.name === "BERITA" && isMobileBeritaDropdownOpen
                               ? "max-h-64 opacity-100"
                               : "max-h-0 opacity-0"
                           }

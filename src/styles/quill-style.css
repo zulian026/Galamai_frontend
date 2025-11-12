@@ -1,0 +1,205 @@
+/* Style untuk konten dari React Quill Editor */
+
+.quill-content {
+  /* Typography */
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #374151;
+}
+
+/* Headings */
+.quill-content h1,
+.quill-content h2,
+.quill-content h3,
+.quill-content h4,
+.quill-content h5,
+.quill-content h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.quill-content h1 {
+  font-size: 2rem;
+}
+
+.quill-content h2 {
+  font-size: 1.75rem;
+}
+
+.quill-content h3 {
+  font-size: 1.5rem;
+}
+
+.quill-content h4 {
+  font-size: 1.25rem;
+}
+
+.quill-content h5 {
+  font-size: 1.125rem;
+}
+
+.quill-content h6 {
+  font-size: 1rem;
+}
+
+/* Paragraf */
+.quill-content p {
+  margin-bottom: 1rem;
+}
+
+/* List */
+.quill-content ul,
+.quill-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.quill-content li {
+  margin-bottom: 0.5rem;
+}
+
+.quill-content ul {
+  list-style-type: disc;
+}
+
+.quill-content ol {
+  list-style-type: decimal;
+}
+
+.quill-content ul ul,
+.quill-content ol ol {
+  margin-left: 2rem;
+  margin-top: 0.5rem;
+}
+
+/* Bold & Italic */
+.quill-content strong,
+.quill-content b {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.quill-content em,
+.quill-content i {
+  font-style: italic;
+}
+
+/* Links */
+.quill-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.quill-content a:hover {
+  color: #1d4ed8;
+}
+
+/* Blockquote */
+.quill-content blockquote {
+  border-left: 4px solid #2563eb;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 1rem;
+  font-style: italic;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+/* Code */
+.quill-content code {
+  background-color: #f3f4f6;
+  color: #dc2626;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.quill-content pre {
+  background-color: #1f2937;
+  color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  font-family: "Courier New", monospace;
+}
+
+.quill-content pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Table */
+.quill-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.quill-content th,
+.quill-content td {
+  border: 1px solid #d1d5db;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.quill-content th {
+  background-color: #f3f4f6;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.quill-content tbody tr:nth-child(odd) {
+  background-color: #fafafa;
+}
+
+.quill-content tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+/* Image dalam konten */
+.quill-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Horizontal Rule */
+.quill-content hr {
+  border: none;
+  border-top: 1px solid #d1d5db;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Utility classes dari Quill */
+.quill-content .ql-align-center {
+  text-align: center;
+}
+
+.quill-content .ql-align-right {
+  text-align: right;
+}
+
+.quill-content .ql-align-justify {
+  text-align: justify;
+}
+
+/* Text color & background */
+.quill-content .ql-color-#000000 {
+  color: #000000;
+}
+
+.quill-content .ql-bg-#ffff00 {
+  background-color: #ffff00;
+}

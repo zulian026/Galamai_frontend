@@ -12,7 +12,7 @@ export default function AdminArtikel() {
   const { token } = useAuth();
   const { getAll, delete: remove, update, publish } = artikelService;
   const { confirm } = useConfirm();
-  const { showToast } = useToast(); 
+  const { showToast } = useToast();
 
   const [artikel, setArtikel] = useState([]);
   const [filteredArtikel, setFilteredArtikel] = useState([]);

@@ -1,5 +1,5 @@
 // src/components/Footer.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Twitter,
   Youtube,
@@ -11,9 +11,32 @@ import {
 import logo from "../../assets/images/logo.png";
 
 export default function Footer() {
+  // --- Tambahkan state untuk statistik ---
+  const [stats, setStats] = useState({
+    today: 0,
+    month: 0,
+    total: 0,
+  });
+
+  // --- Ambil data dari API Laravel ---
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/visitors/stats");
+        if (!res.ok) throw new Error("Gagal ambil data pengunjung");
+        const data = await res.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Error fetch statistik:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <footer className="relative bg-gray-50 overflow-hidden mt-20">
-      {/* Enhanced background with gradient and wave effect */}
+      {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-header via-header to-blue-900">
         <svg
           className="absolute bottom-0 left-0 w-full h-32"
@@ -39,7 +62,7 @@ export default function Footer() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Logo and Organization Info */}
+          {/* Logo + Info */}
           <div className="text-center lg:text-left">
             <div className="flex flex-col items-center lg:items-start mb-6">
               <div className="bg-white p-4 rounded-2xl shadow-lg mb-4 transform hover:scale-105 transition-transform duration-300">
@@ -50,9 +73,7 @@ export default function Footer() {
                 />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white mb-1">
-                  BADAN POM
-                </h2>
+                <h2 className="text-2xl font-bold text-white mb-1">BADAN POM</h2>
                 <p className="text-blue-200 font-semibold text-lg">
                   Balai Besar POM di Padang
                 </p>
@@ -65,17 +86,9 @@ export default function Footer() {
             {/* Social Media */}
             <div className="flex justify-center lg:justify-start space-x-4">
               {[
-                {
-                  icon: Facebook,
-                  color: "hover:bg-blue-600",
-                  label: "Facebook",
-                },
+                { icon: Facebook, color: "hover:bg-blue-600", label: "Facebook" },
                 { icon: Twitter, color: "hover:bg-blue-400", label: "Twitter" },
-                {
-                  icon: Instagram,
-                  color: "hover:bg-pink-500",
-                  label: "Instagram",
-                },
+                { icon: Instagram, color: "hover:bg-pink-500", label: "Instagram" },
                 { icon: Youtube, color: "hover:bg-red-500", label: "YouTube" },
               ].map(({ icon: Icon, color, label }) => (
                 <a
@@ -90,7 +103,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation Menu */}
+          {/* Navigation + Statistik */}
           <div className="text-center lg:text-left">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center justify-center lg:justify-start">
               <Globe className="mr-2" size={20} />
@@ -112,7 +125,7 @@ export default function Footer() {
               )}
             </ul>
 
-            {/* Visitor Stats */}
+            {/* Statistik Pengunjung (Dynamic) */}
             <div className="mt-8 p-4 bg-white/10 rounded-lg backdrop-blur-sm">
               <h4 className="text-white font-semibold mb-3 flex items-center justify-center lg:justify-start">
                 <Users className="mr-2" size={18} />
@@ -121,29 +134,32 @@ export default function Footer() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-blue-200">Hari ini:</span>
-                  <span className="text-white font-semibold">101</span>
+                  <span className="text-white font-semibold">
+                    {stats.today.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-blue-200">Bulan ini:</span>
-                  <span className="text-white font-semibold">3,151</span>
+                  <span className="text-white font-semibold">
+                    {stats.month.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-blue-200">Total:</span>
-                  <span className="text-white font-semibold">28,457</span>
+                  <span className="text-white font-semibold">
+                    {stats.total.toLocaleString()}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Copyright Section */}
+        {/* Footer bawah */}
         <div className="border-t border-white/20 pt-8 mt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-blue-200 text-sm text-center md:text-left">
-              © 2024 Balai Besar POM di Padang. Semua hak dilindungi
-              undang-undang.
-            </p>
-          </div>
+          <p className="text-blue-200 text-sm text-center">
+            © 2024 Balai Besar POM di Padang. Semua hak dilindungi undang-undang.
+          </p>
         </div>
       </div>
     </footer>

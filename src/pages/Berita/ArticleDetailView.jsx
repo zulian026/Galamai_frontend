@@ -181,7 +181,7 @@ export default function ArticleDetailPage() {
           className="relative h-[500px] flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroBg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-blue-900/90 to-indigo-900/95"></div>
+          <div className="absolute inset-0 bg-header/95"></div>
 
           {/* Back Button */}
           <button

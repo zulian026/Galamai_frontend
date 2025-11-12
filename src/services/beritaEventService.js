@@ -64,20 +64,25 @@ export const beritaEventService = {
   },
 
   // 🔹 Ambil berita dengan pagination
-  getPaginated: async ({ page = 1, perPage = 10, type, search, sort } = {}, token) => {
+  getPaginated: async (
+    { page = 1, perPage = 10, type, search, sort } = {},
+    token
+  ) => {
     try {
-      let url = `${import.meta.env.VITE_API_URL}/api/berita?page=${page}&per_page=${perPage}`;
-      
+      let url = `${
+        import.meta.env.VITE_API_URL
+      }/api/berita?page=${page}&per_page=${perPage}`;
+
       // ✅ Tambahkan filter type jika ada
       if (type) {
         url += `&type=${type}`;
       }
-      
+
       // ✅ Tambahkan search jika ada
       if (search) {
         url += `&search=${encodeURIComponent(search)}`;
       }
-      
+
       // ✅ Tambahkan sort jika ada
       if (sort) {
         url += `&sort=${sort}`;
@@ -105,18 +110,20 @@ export const beritaEventService = {
     token
   ) => {
     try {
-      let url = `${import.meta.env.VITE_API_URL}/api/berita?status=${status}&page=${page}&per_page=${perPage}`;
-      
+      let url = `${
+        import.meta.env.VITE_API_URL
+      }/api/berita?status=${status}&page=${page}&per_page=${perPage}`;
+
       // ✅ Tambahkan filter type jika ada
       if (type) {
         url += `&type=${type}`;
       }
-      
+
       // ✅ Tambahkan search jika ada
       if (search) {
         url += `&search=${encodeURIComponent(search)}`;
       }
-      
+
       // ✅ Tambahkan sort jika ada
       if (sort) {
         url += `&sort=${sort}`;

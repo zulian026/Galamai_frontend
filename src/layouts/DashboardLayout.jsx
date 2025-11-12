@@ -6,7 +6,6 @@ import {
   HelpCircle,
   Shield,
   Users,
-  Settings,
   Triangle,
   BookOpen,
   Bell,
@@ -14,42 +13,154 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import logo from "../assets/images/logo.png";
 
+/* ============================
+   MENU CONFIGURATION
+============================ */
+const MENU_SECTIONS = [
+  {
+    title: "UTAMA",
+    items: [
+      {
+        key: "dashboard",
+        name: "Dashboard",
+        icon: <LayoutDashboard className="w-5 h-5" />,
+        path: "/dashboard",
+      },
+    ],
+  },
+  {
+    title: "LAYANAN",
+    items: [
+      {
+        key: "pengaduan",
+        name: "Pengelolaan Pengaduan",
+        icon: <HelpCircle className="w-5 h-5" />,
+        path: "/dashboard/pengaduan",
+      },
+      {
+        key: "whistle",
+        name: "Whistle Blowing",
+        icon: <Triangle className="w-5 h-5" />,
+        path: "/dashboard/whistle",
+      },
+      {
+        key: "pertanyaan",
+        name: "Pertanyaan & Faq",
+        icon: <MessageCircleQuestion className="w-5 h-5" />,
+        path: "/dashboard/pertanyaan",
+      },
+      {
+        key: "report_wb",
+        name: "Laporan Wb",
+        icon: <MessageCircleQuestion className="w-5 h-5" />,
+        path: "/dashboard/Laporanwb",
+      },
+    ],
+  },
+  {
+    title: "KONTEN",
+    items: [
+      {
+        key: "konten",
+        name: "Manajemen Konten",
+        icon: <BookOpen className="w-5 h-5" />,
+        path: "/dashboard/konten",
+        children: [
+          {
+            key: "artikel",
+            name: "Artikel",
+            path: "/dashboard/konten/artikel",
+          },
+          {
+            key: "layanan_aplikasi",
+            name: "Aplikasi Layanan",
+            path: "/dashboard/konten/layanan_aplikasi",
+          },
+          { key: "berita", name: "Berita", path: "/dashboard/berita" },
+          { key: "profil", name: "Profil", path: "/dashboard/profil" },
+          {
+            key: "chart",
+            name: "Chart Layanan",
+            path: "/dashboard/chart-layanan",
+          },
+          { key: "kontak", name: "Kontak", path: "/dashboard/kontak" },
+        ],
+      },
+      {
+        key: "layanan_master",
+        name: "Master Layanan",
+        icon: <Shield className="w-5 h-5" />,
+        path: "/dashboard/layanan",
+      },
+    ],
+  },
+  {
+    title: "PENGATURAN",
+    items: [
+      {
+        key: "user_management",
+        name: "Manajemen User",
+        icon: <Users className="w-5 h-5" />,
+        path: "/dashboard/users",
+      },
+    ],
+  },
+];
+
+/* ============================
+   ROLE ACCESS CONFIG
+============================ */
+const ROLE_ACCESS = {
+  "Super Admin": [
+    "dashboard",
+    "pengaduan",
+    "faq",
+    "whistle",
+    "pertanyaan",
+    "konten",
+    "layanan_master",
+    "user_management",
+  ],
+  "Admin Web": ["dashboard", "konten", "layanan_master"],
+  "Admin Pengaduan": ["dashboard", "pengaduan", "faq", "pertanyaan"],
+  "Admin Fungsi": ["dashboard"],
+  "Admin Whistle Blowing": ["dashboard", "whistle"],
+  "Kepala Balai": ["dashboard", "report_wb"],
+};
+
 export default function DashboardLayout() {
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Default false for mobile
-  const [isMobile, setIsMobile] = useState(false);
   const { user, logout, loading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [openMenus, setOpenMenus] = useState({});
 
-  // Check if device is mobile
+  /* ============================
+     HANDLE RESPONSIVE BEHAVIOR
+  ============================ */
   useEffect(() => {
-    const checkMobile = () => {
+    const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-close sidebar on mobile, auto-open on desktop
-      if (mobile) {
-        setSidebarOpen(false);
-      } else {
-        setSidebarOpen(true);
-      }
+      setSidebarOpen(!mobile);
     };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Close sidebar when route changes on mobile
   useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+    if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
 
-  // Show loading spinner while checking authentication
+  /* ============================
+     HELPER FUNCTIONS
+  ============================ */
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -61,150 +172,37 @@ export default function DashboardLayout() {
     );
   }
 
-  // Helper function to get user display name safely
-  const getUserName = () => {
-    return user?.nama || user?.name || "Guest";
-  };
+  const getUserName = () => user?.nama || user?.name || "Guest";
+  const getUserRole = () => user?.role?.nm_role || "No Role";
+  const getUserInitials = () =>
+    user?.nama ? user.nama.charAt(0).toUpperCase() : "?";
 
-  // Helper function to get user role safely
-  const getUserRole = () => {
-    return user?.role?.nm_role || "No Role";
-  };
-
-  // Helper function to get user initials safely
-  const getUserInitials = () => {
-    const name = user?.nama || user?.name;
-    if (name) {
-      return name.charAt(0).toUpperCase();
-    }
-    return "?";
-  };
-
-  // Semua menu
-  const sections = [
-    {
-      title: "UTAMA",
-      items: [
-        {
-          name: "Dashboard",
-          icon: <LayoutDashboard className="w-5 h-5" />,
-          path: "/dashboard",
-        },
-      ],
-    },
-    {
-      title: "LAYANAN",
-      items: [
-        {
-          name: "Pengelolaan Pengaduan",
-          icon: <HelpCircle className="w-5 h-5" />,
-          path: "/dashboard/pengaduan",
-        },
-        {
-          name: "Manajemen Faq",
-          icon: <FileText className="w-5 h-5" />,
-          path: "/dashboard/faq",
-        },
-        {
-          name: "Whistle Blowing",
-          icon: <Triangle className="w-5 h-5" />,
-          path: "/dashboard/whistle",
-        },
-      ],
-    },
-    {
-      title: "KONTEN",
-      items: [
-        {
-          name: "Manajemen Konten",
-          icon: <BookOpen className="w-5 h-5" />,
-          path: "/dashboard/konten",
-          children: [
-            {
-              name: "Artikel",
-              path: "/dashboard/konten/Artikel",
-            },
-            {
-              name: "Aplikasi Layanan",
-              path: "/dashboard/konten/Layanan_Aplikasi",
-            },
-            {
-              name: "Berita",
-              path: "/dashboard/berita",
-            },
-            {
-              name: "Profil",
-              path: "/dashboard/profil",
-            },
-          ],
-        },
-        {
-          name: "Master Layanan",
-          icon: <Shield className="w-5 h-5" />,
-          path: "/dashboard/layanan",
-        },
-      ],
-    },
-    {
-      title: "PENGATURAN",
-      items: [
-        {
-          name: "Manajemen User",
-          icon: <Users className="w-5 h-5" />,
-          path: "/dashboard/users",
-        },
-      ],
-    },
-  ];
-
-  // Role-based menu
-  const roleBasedMenu = {
-    "Super Admin": [
-      "Dashboard",
-      "Pengelolaan Pengaduan",
-      "Manajemen Faq",
-      "Whistle Blowing",
-      "Manajemen Konten",
-      "Master Layanan",
-      "Manajemen User",
-      "Profil Bpom",
-    ],
-    "Admin Web": [
-      "Dashboard",
-      "Manajemen Konten",
-      "Master Layanan",
-      "Profil Bpom",
-    ],
-    "Admin Pengaduan": ["Dashboard", "Pengelolaan Pengaduan", "Manajemen Faq"],
-    "Admin Fungsi": ["Dashboard", "Pengelolaan Pengaduan"],
-    "Admin Whistle Blowing": ["Dashboard", "Whistle Blowing"],
-  };
-
-  const [openMenus, setOpenMenus] = useState({});
   const userRole = getUserRole();
-  const allowedMenu = roleBasedMenu[userRole] || [];
+  const allowedKeys = ROLE_ACCESS[userRole] || [];
 
-  // Route protection
-  const allPaths = sections.flatMap((s) => s.items.map((i) => i.path));
-  const allowedPaths = sections
-    .flatMap((s) => s.items)
-    .filter((i) => allowedMenu.includes(i.name))
-    .map((i) => i.path);
+  /* ============================
+     ROUTE PROTECTION
+  ============================ */
+  const allPaths = MENU_SECTIONS.flatMap((s) =>
+    s.items.flatMap((i) => [i.path, ...(i.children?.map((c) => c.path) || [])])
+  );
+  const allowedPaths = MENU_SECTIONS.flatMap((s) => s.items)
+    .filter((i) => allowedKeys.includes(i.key))
+    .flatMap((i) => [i.path, ...(i.children?.map((c) => c.path) || [])]);
 
-  if (
-    allPaths.includes(location.pathname) &&
-    !allowedPaths.includes(location.pathname)
-  ) {
-    return <Navigate to="/dashboard" replace />;
+  const currentPath = location.pathname;
+  const isAllowed = allowedPaths.some((path) => currentPath.startsWith(path));
+
+  if (allPaths.includes(currentPath) && !isAllowed) {
+    return <Navigate to="/403" replace />;
   }
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
+  /* ============================
+     RENDER COMPONENT
+  ============================ */
   return (
-    <div className="flex min-h-screen bg-gray-50 relative">
-      {/* Mobile Overlay */}
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Overlay */}
       {isMobile && sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -212,23 +210,24 @@ export default function DashboardLayout() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - FIXED */}
       <aside
         className={`
+          fixed left-0 top-0 h-screen z-50
           ${
             isMobile
-              ? `fixed left-0 top-0 h-full z-50 transform transition-transform duration-300 ${
+              ? `transform transition-transform duration-300 ${
                   sidebarOpen ? "translate-x-0" : "-translate-x-full"
                 }`
-              : "relative"
+              : sidebarOpen
+              ? "w-64"
+              : "w-16"
           }
-          ${!isMobile && sidebarOpen ? "w-64" : !isMobile ? "w-16" : "w-64"}
-          bg-header border-r border-gray-200 flex flex-col
-          ${!isMobile ? "transition-all duration-300" : ""}
+          bg-header border-r border-gray-200 flex flex-col transition-all duration-300
         `}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center">
             <img src={logo} alt="Logo" className="h-8" />
             {(sidebarOpen || isMobile) && (
@@ -237,8 +236,6 @@ export default function DashboardLayout() {
               </span>
             )}
           </div>
-
-          {/* Close button for mobile */}
           {isMobile && (
             <button
               onClick={() => setSidebarOpen(false)}
@@ -251,12 +248,11 @@ export default function DashboardLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3">
-          {sections.map((section) => {
-            const filteredItems = section.items.filter((item) =>
-              allowedMenu.includes(item.name)
+          {MENU_SECTIONS.map((section) => {
+            const visibleItems = section.items.filter((i) =>
+              allowedKeys.includes(i.key)
             );
-
-            if (filteredItems.length === 0) return null;
+            if (visibleItems.length === 0) return null;
 
             return (
               <div key={section.title} className="mb-6">
@@ -266,26 +262,22 @@ export default function DashboardLayout() {
                   </h2>
                 )}
                 <div className="space-y-1">
-                  {filteredItems.map((item) => {
-                    const hasChildren =
-                      item.children && item.children.length > 0;
-                    const isOpen = openMenus[item.name];
-                    const isActive = location.pathname === item.path;
+                  {visibleItems.map((item) => {
+                    const hasChildren = item.children?.length > 0;
+                    const isOpen = openMenus[item.key];
+                    const isActive = currentPath.startsWith(item.path);
                     const isChildActive =
                       hasChildren &&
-                      item.children.some(
-                        (child) => location.pathname === child.path
-                      );
+                      item.children.some((c) => currentPath.startsWith(c.path));
 
                     return (
-                      <div key={item.path}>
-                        {/* Parent Menu Item */}
+                      <div key={item.key}>
                         {hasChildren ? (
                           <button
                             onClick={() =>
                               setOpenMenus((prev) => ({
                                 ...prev,
-                                [item.name]: !prev[item.name],
+                                [item.key]: !prev[item.key],
                               }))
                             }
                             className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -311,15 +303,12 @@ export default function DashboardLayout() {
                                 <span>{item.name}</span>
                               )}
                             </div>
-                            {hasChildren && (sidebarOpen || isMobile) && (
-                              <span className="text-gray-400">
-                                {isOpen ? (
-                                  <ChevronDown className="w-4 h-4" />
-                                ) : (
-                                  <ChevronRight className="w-4 h-4" />
-                                )}
-                              </span>
-                            )}
+                            {(sidebarOpen || isMobile) &&
+                              (isOpen ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              ))}
                           </button>
                         ) : (
                           <Link
@@ -346,15 +335,15 @@ export default function DashboardLayout() {
                           </Link>
                         )}
 
-                        {/* Child Menu Items */}
+                        {/* Children */}
                         {hasChildren && isOpen && (sidebarOpen || isMobile) && (
                           <div className="ml-8 mt-1 space-y-1">
                             {item.children.map((child) => (
                               <Link
-                                key={child.path}
+                                key={child.key}
                                 to={child.path}
                                 className={`block px-3 py-2 rounded-md text-sm transition-colors ${
-                                  location.pathname === child.path
+                                  currentPath.startsWith(child.path)
                                     ? "bg-blue-50 text-blue-700 font-medium"
                                     : "text-gray-300 hover:bg-gray-700 hover:text-white"
                                 }`}
@@ -374,14 +363,18 @@ export default function DashboardLayout() {
         </nav>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6">
+      {/* Main Area - WITH MARGIN FOR SIDEBAR */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ${
+          !isMobile ? (sidebarOpen ? "ml-64" : "ml-16") : ""
+        }`}
+      >
+        {/* Header - FIXED */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0">
           <div className="flex items-center gap-4">
             <button
-              onClick={toggleSidebar}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-gray-100 rounded-lg"
             >
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
@@ -389,17 +382,13 @@ export default function DashboardLayout() {
               Dashboard
             </h1>
           </div>
-
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Notification */}
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <button className="relative p-2 hover:bg-gray-100 rounded-lg">
               <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full"></span>
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full" />
             </button>
-
-            {/* User Profile */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="text-right hidden sm:block">
+              <div className="hidden sm:block text-right">
                 <div className="text-sm font-medium text-gray-900 truncate max-w-32">
                   {getUserName()}
                 </div>
@@ -407,28 +396,21 @@ export default function DashboardLayout() {
                   {getUserRole()}
                 </div>
               </div>
-
-              {/* Simple Avatar */}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-xs sm:text-sm font-semibold text-white">
-                  {getUserInitials()}
-                </span>
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                {getUserInitials()}
               </div>
             </div>
-
-            {/* Logout Button */}
             <button
               onClick={logout}
-              className="px-2 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200"
+              className="px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg border border-gray-200"
             >
-              <span className="hidden sm:inline">Logout</span>
-              <span className="sm:hidden">Out</span>
+              Logout
             </button>
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 bg-gray-50 overflow-auto">
+        {/* Main Content - SCROLLABLE */}
+        <main className="flex-1 p-4 sm:p-6 bg-gray-50 overflow-y-auto">
           <Outlet />
         </main>
       </div>

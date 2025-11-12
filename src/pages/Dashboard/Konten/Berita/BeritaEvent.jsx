@@ -5,6 +5,8 @@ import { useAuth } from "../../../../contexts/AuthContext";
 import BeritaForm from "./BeritaForm";
 import BeritaTable from "./BeritaTable";
 import BeritaPreview from "./BeritaPreview";
+import { useToast } from "../../../../contexts/ToastContext";
+import { useConfirm } from "../../../../contexts/ConfirmContext";
 
 export default function AdminBeritaEvent() {
   const { token } = useAuth();
@@ -19,6 +21,8 @@ export default function AdminBeritaEvent() {
   const [previewBerita, setPreviewBerita] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
 
   // ====== Fetch Berita ======
   const fetchBerita = async () => {
@@ -70,20 +74,23 @@ export default function AdminBeritaEvent() {
     setShowPreview(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Hapus berita/event ini?")) return;
-    try {
-      const data = await remove(id, token);
-      if (data.success) {
-        fetchBerita();
-        alert("Berita/Event berhasil dihapus!");
-      } else {
-        alert(data.message || "Gagal menghapus berita/event");
+  const handleDelete = (id) => {
+    const beritaItem = berita.find((b) => b.id_berita_event === id);
+
+    confirm(`Yakin ingin menghapus "${beritaItem?.judul}"?`, async () => {
+      try {
+        const data = await remove(id, token);
+        if (data.success) {
+          await fetchBerita();
+          showToast(`"${beritaItem?.judul}" berhasil dihapus!`, "success");
+        } else {
+          showToast(data.message || "Gagal menghapus berita/event", "error");
+        }
+      } catch (err) {
+        console.error("Delete error:", err);
+        showToast("Terjadi kesalahan saat menghapus.", "error");
       }
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Gagal menghapus berita/event");
-    }
+    });
   };
 
   // ====== Publish Handler ======
@@ -92,16 +99,16 @@ export default function AdminBeritaEvent() {
       const data = await publish(id, token);
       if (data.success) {
         fetchBerita();
-        alert("Berita/Event berhasil dipublish!");
+        showToast("Berita/Event berhasil dipublish!", "success");
         if (previewBerita && previewBerita.id === id) {
           setPreviewBerita((prev) => ({ ...prev, status: "publish" }));
         }
       } else {
-        alert(data.message || "Gagal publish berita/event");
+        showToast(data.message || "Gagal publish berita/event", "error");
       }
     } catch (err) {
       console.error("Publish error:", err);
-      alert("Gagal publish berita/event");
+      showToast("Gagal publish berita/event", "error");
     }
   };
 

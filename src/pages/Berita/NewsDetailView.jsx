@@ -275,7 +275,7 @@ export default function NewsDetailPage() {
           className="relative h-[400px] md:h-[450px] flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroBg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-blue-900/85 to-indigo-900/90"></div>
+          <div className="absolute inset-0 bg-header/95"></div>
 
           {/* Back Button */}
           <button
@@ -420,8 +420,6 @@ export default function NewsDetailPage() {
                     </div>
                   )}
                 </div>
-
-               
               </div>
             </div>
 
@@ -558,8 +556,6 @@ export default function NewsDetailPage() {
                   Lihat Semua Berita
                 </button>
               </div>
-
-            
             </div>
           </aside>
         </div>

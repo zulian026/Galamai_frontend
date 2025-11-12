@@ -5,7 +5,7 @@ import LayananUtama from "../components/sections/Service";
 import AboutSection from "../components/sections/About";
 import NewsSection from "../components/sections/News";
 import ArticleSection from "../components/sections/Article";
-
+import ScrollToTopButton from "../components/common/ScrollToTopButton";
 
 export default function HomePage() {
   return (
@@ -15,6 +15,7 @@ export default function HomePage() {
       <AboutSection />
       <NewsSection />
       <ArticleSection />
+      <ScrollToTopButton />
     </>
   );
 }
